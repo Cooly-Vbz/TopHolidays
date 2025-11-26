@@ -12,6 +12,15 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+[data-theme='dark'] {
+  color: #E5E7EB;
+  background-color: #020617;
+}
+
+[data-theme='dark'] body {
+  background-color: #020617;
+}
+
 a {
   font-weight: 500;
   color: #646cff;
@@ -42,6 +51,14 @@ button {
 }
 button:hover {
   border-color: #646cff;
+}
+
+[data-theme='dark'] button {
+  background-color: #0F172A;
+  color: #E5E7EB;
+}
+[data-theme='dark'] button:hover {
+  border-color: #38BDF8;
 }
 button:focus,
 button:focus-visible {

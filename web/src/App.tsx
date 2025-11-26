@@ -18,6 +18,8 @@ const CustomerCare = lazy(() => import('./pages/CustomerCare'))
 const About = lazy(() => import('./pages/About'))
 const Checkout = lazy(() => import('./pages/Checkout'))
 const OrderConfirmation = lazy(() => import('./pages/OrderConfirmation'))
+const Eula = lazy(() => import('./pages/Eula'))
+const Privacy = lazy(() => import('./pages/Privacy'))
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -55,6 +57,8 @@ function App() {
             <Route path="/orders" element={<div style={{ animation: 'fadeIn 250ms ease-out' }}><Orders /></div>} />
             <Route path="/customer-care" element={<div style={{ animation: 'fadeIn 250ms ease-out' }}><CustomerCare /></div>} />
             <Route path="/about" element={<div style={{ animation: 'fadeIn 250ms ease-out' }}><About /></div>} />
+            <Route path="/eula" element={<div style={{ animation: 'fadeIn 250ms ease-out' }}><Eula /></div>} />
+            <Route path="/privacy" element={<div style={{ animation: 'fadeIn 250ms ease-out' }}><Privacy /></div>} />
             <Route path="*" element={<div style={{ padding: 16 }}>Not Found. <Link to="/">Go Home</Link></div>} />
           </Routes>
         </Suspense>

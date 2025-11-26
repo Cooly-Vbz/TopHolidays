@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
+import { useTheme } from './ThemeProvider'
 
 export default function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { theme, toggleTheme } = useTheme()
   return (
     <>
       <div aria-hidden={!open} onClick={onClose} style={{
@@ -9,7 +11,7 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
       }} />
       <aside role="dialog" aria-modal={open} style={{
         position: 'fixed', top: 0, left: 0, height: '100vh', width: '75vw', maxWidth: 320,
-        background: '#fff', boxShadow: '2px 0 12px rgba(0,0,0,0.2)', zIndex: 1000,
+        background: theme === 'dark' ? '#020617' : '#fff', boxShadow: '2px 0 12px rgba(0,0,0,0.2)', zIndex: 1000,
         transform: open ? 'translateX(0%)' : 'translateX(-105%)', transition: 'transform 350ms ease-out',
         display: 'flex', flexDirection: 'column'
       }}>
@@ -37,8 +39,28 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
             <Link to="/customer-care">💬 Customer Care</Link>
             <Link to="/about">ℹ️ About Us</Link>
           </nav>
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            style={{
+              marginTop: 16,
+              padding: '8px 12px',
+              borderRadius: 9999,
+              border: '1px solid #CBD5E0',
+              background: theme === 'dark' ? '#0F172A' : '#F9FAFB',
+              color: theme === 'dark' ? '#E5E7EB' : '#111827',
+              fontSize: 13,
+            }}
+          >
+            Switch to {theme === 'light' ? 'dark' : 'light'} theme
+          </button>
         </div>
-        <footer style={{ padding: 12, fontSize: 12, color: '#718096' }}>EULA | Privacy Policy</footer>
+        <footer style={{ padding: 12, fontSize: 12, color: '#718096', display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+          <Link to="/eula" style={{ color: 'inherit', textDecoration: 'underline' }}>EULA</Link>
+          <span>|</span>
+          <Link to="/privacy" style={{ color: 'inherit', textDecoration: 'underline' }}>Privacy Policy</Link>
+        </footer>
       </aside>
     </>
   )

@@ -2,6 +2,7 @@ import { encryptData, decryptData } from './crypto'
 
 const USER_KEY = 'auth:user'
 const SETTINGS_KEY = 'auth:settings'
+const SETTINGS_SECRET_KEY = 'auth:settings-secret'
 
 export type UserProfile = {
   id: string
@@ -153,6 +154,14 @@ export function loadSettings(): AccountSettings {
     const raw = localStorage.getItem(SETTINGS_KEY)
     if (!raw) return defaultSettings
     const parsed = JSON.parse(raw)
+    if (parsed && parsed.encrypted && parsed.iv && parsed.secretVersion === 1) {
+      const secret = getOrCreateSettingsSecret()
+      const payload = {
+        encrypted: new Uint8Array(parsed.encrypted),
+        iv: new Uint8Array(parsed.iv),
+      }
+      return decryptData(payload, secret) as AccountSettings
+    }
     return { ...defaultSettings, ...parsed }
   } catch {
     return defaultSettings
@@ -160,5 +169,31 @@ export function loadSettings(): AccountSettings {
 }
 
 export function saveSettings(next: AccountSettings) {
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(next))
+  try {
+    const secret = getOrCreateSettingsSecret()
+    const payloadPromise = encryptData(next, secret)
+    Promise.resolve(payloadPromise).then(payload => {
+      const serializable = {
+        encrypted: Array.from(payload.encrypted),
+        iv: Array.from(payload.iv),
+        secretVersion: 1,
+      }
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(serializable))
+    }).catch(() => {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(next))
+    })
+  } catch {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(next))
+  }
+}
+
+function getOrCreateSettingsSecret(): string {
+  let secret = localStorage.getItem(SETTINGS_SECRET_KEY)
+  if (!secret) {
+    const bytes = new Uint8Array(32)
+    crypto.getRandomValues(bytes)
+    secret = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')
+    localStorage.setItem(SETTINGS_SECRET_KEY, secret)
+  }
+  return secret
 }

@@ -6,7 +6,7 @@ import { getReviews, getAverageRating, addReview } from '../lib/reviews'
 import { useTheme } from '../components/ThemeProvider'
 import StarRating from '../components/StarRating'
 import ReviewCard from '../components/ReviewCard'
-import { useAuth } from '../lib/auth'
+import { useAuth } from '../components/AuthProvider'
 
 function addToCart(prod: Product) {
   const items = JSON.parse(localStorage.getItem('cart') || '[]')

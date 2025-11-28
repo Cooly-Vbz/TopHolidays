@@ -4,6 +4,8 @@ export type Product = {
   price: number
   image: string
   promoted?: boolean
+  holiday?: string
+  category?: string
 }
 
 export async function fetchProducts(): Promise<Product[]> {

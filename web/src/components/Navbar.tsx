@@ -39,14 +39,14 @@ function currentTheme() {
   return 'default';
 }
 
-export default function Navbar({ onMenu, isSidebarOpen }: { onMenu: () => void, onAccount?: () => void, isSidebarOpen?: boolean }) {
+export default function Navbar({ onMenu, onAccount, isSidebarOpen }: { onMenu: () => void, onAccount?: () => void, isSidebarOpen?: boolean }) {
   const cartCount = useCartCount()
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useAuth()
   const { theme: appTheme } = useTheme()
   const [showAccountPopup, setShowAccountPopup] = useState(false)
-  const accountButtonRef = useRef<HTMLButtonElement>(null)
+  const accountButtonRef = useRef<HTMLButtonElement | null>(null)
   const onCart = () => navigate('/cart')
 
   const onHome = () => navigate('/')
@@ -62,7 +62,7 @@ export default function Navbar({ onMenu, isSidebarOpen }: { onMenu: () => void, 
   return (
     <nav style={{
       position: 'fixed', top: 0, left: 0, right: 0, height: 64,
-      background: bgColor, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 8px rgba(0,0,0,0.06)', zIndex: 1000,
+      background: bgColor, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 8px rgba(0,0,0,0.06)', zIndex: 900,
       display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 12px',
       transition: 'background-color 0.3s, color 0.3s',
       filter: isSidebarOpen ? 'brightness(0.75)' : 'none'
@@ -124,11 +124,7 @@ export default function Navbar({ onMenu, isSidebarOpen }: { onMenu: () => void, 
         </button>
       </div>
 
-      <AccountPopup
-        isOpen={showAccountPopup}
-        onClose={() => setShowAccountPopup(false)}
-        anchorRef={accountButtonRef}
-      />
+      {showAccountPopup && <AccountPopup isOpen={showAccountPopup} onClose={() => setShowAccountPopup(false)} anchorRef={accountButtonRef} onOpenSettings={onAccount || (() => { })} />}
     </nav>
   )
 }

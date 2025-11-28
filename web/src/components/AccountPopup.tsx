@@ -12,13 +12,15 @@ import { listAccounts } from '../lib/auth'
 interface AccountPopupProps {
     isOpen: boolean
     onClose: () => void
-    anchorRef: React.RefObject<HTMLButtonElement | null>
+    anchorRef: React.RefObject<HTMLElement | null>
+    onOpenSettings?: () => void
 }
 
 export default function AccountPopup({
     isOpen,
     onClose,
-    anchorRef
+    anchorRef,
+    onOpenSettings
 }: AccountPopupProps) {
     const { theme } = useTheme()
     const { user, signOut } = useAuth()
@@ -53,7 +55,8 @@ export default function AccountPopup({
     // Close on outside click
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
-            if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
+            if (popupRef.current && !popupRef.current.contains(event.target as Node) &&
+                anchorRef.current && !anchorRef.current.contains(event.target as Node)) {
                 onClose()
             }
         }
@@ -84,132 +87,168 @@ export default function AccountPopup({
                     animation: 'fadeIn 0.5s ease-out',
                 }}
             >
-            {/* Arrow pointing to account button */}
-            <div style={{
-                position: 'absolute',
-                top: -8,
-                right: 16,
-                width: 0,
-                height: 0,
-                borderLeft: '8px solid transparent',
-                borderRight: '8px solid transparent',
-                borderBottom: `8px solid ${colors.bg.primary}`,
-            }} />
+                {/* Arrow pointing to account button */}
+                <div style={{
+                    position: 'absolute',
+                    top: -8,
+                    right: 16,
+                    width: 0,
+                    height: 0,
+                    borderLeft: '8px solid transparent',
+                    borderRight: '8px solid transparent',
+                    borderBottom: `8px solid ${colors.bg.primary}`,
+                }} />
 
-            {/* Locale & Currency */}
-            <button
-                onClick={() => setShowLocaleSelector(true)}
-                style={{
-                    width: '100%',
-                    padding: 12,
-                    background: 'transparent',
-                    border: 'none',
-                    borderRadius: 8,
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    color: colors.text.primary,
-                }}
-            >
-                🌍 Locale & Currency
-                <div style={{ fontSize: 12, color: colors.text.tertiary }}>
-                    {LOCALES[locale].name} • {LOCALES[locale].currency}
-                </div>
-            </button>
-
-            <hr style={{ border: 0, height: 1, background: colors.border.light, margin: '8px 0' }} />
-
-            {/* Current Login */}
-            <div style={{ padding: 12 }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: colors.text.primary }}>
-                    {user?.displayName || 'Guest User'}
-                </div>
-                <div style={{ fontSize: 12, color: colors.text.tertiary }}>
-                    {user?.email || 'Not signed in'}
-                </div>
-            </div>
-
-            {user ? (
+                {/* Locale & Currency */}
                 <button
-                    onClick={() => { signOut(); onClose(); }}
+                    onClick={() => setShowLocaleSelector(true)}
                     style={{
                         width: '100%',
                         padding: 12,
                         background: 'transparent',
-                        border: `1px solid ${colors.border.default}`,
-                        borderRadius: 8,
-                        color: colors.text.secondary,
-                        cursor: 'pointer',
-                    }}
-                >
-                    Sign Out
-                </button>
-            ) : (
-                <button
-                    onClick={() => {/* open login modal */}}
-                    style={{
-                        width: '100%',
-                        padding: 12,
-                        background: colors.brand.primary,
                         border: 'none',
                         borderRadius: 8,
-                        color: '#FFFFFF',
+                        textAlign: 'left',
                         cursor: 'pointer',
-                        fontWeight: 600,
+                        color: colors.text.primary,
                     }}
                 >
-                    Sign In / Sign Up
+                    🌍 Locale & Currency
+                    <div style={{ fontSize: 12, color: colors.text.tertiary }}>
+                        {LOCALES[locale].name} • {LOCALES[locale].currency}
+                    </div>
                 </button>
-            )}
 
-            {accounts.length > 1 && (
+                <hr style={{ border: 0, height: 1, background: colors.border.light, margin: '8px 0' }} />
+
+                {/* Current Login */}
+                <div style={{ padding: 12 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: colors.text.primary }}>
+                        {user?.displayName || 'Guest User'}
+                    </div>
+                    <div style={{ fontSize: 12, color: colors.text.tertiary }}>
+                        {user?.email || 'Not signed in'}
+                    </div>
+                </div>
+
+                {user ? (
+                    <>
+                        <button
+                            onClick={() => { onClose(); onOpenSettings?.(); }}
+                            style={{
+                                width: '100%',
+                                padding: 12,
+                                marginBottom: 8,
+                                background: colors.brand.primary,
+                                border: 'none',
+                                borderRadius: 8,
+                                color: '#FFFFFF',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                            }}
+                        >
+                            Account Settings
+                        </button>
+                        <button
+                            onClick={() => { signOut(); onClose(); }}
+                            style={{
+                                width: '100%',
+                                padding: 12,
+                                background: 'transparent',
+                                border: `1px solid ${colors.border.default}`,
+                                borderRadius: 8,
+                                color: colors.text.secondary,
+                                cursor: 'pointer',
+                            }}
+                        >
+                            Sign Out
+                        </button>
+                    </>
+                ) : (
+                    <button
+                        onClick={() => {/* open login modal */ }}
+                        style={{
+                            width: '100%',
+                            padding: 12,
+                            background: colors.brand.primary,
+                            border: 'none',
+                            borderRadius: 8,
+                            color: '#FFFFFF',
+                            cursor: 'pointer',
+                            fontWeight: 600,
+                        }}
+                    >
+                        Sign In / Sign Up
+                    </button>
+                )}
+
+                <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {accounts.length > 0 && (
+                        <button
+                            onClick={() => {/* open account switcher */ }}
+                            style={{
+                                width: '100%',
+                                padding: 12,
+                                background: 'transparent',
+                                border: `1px solid ${colors.border.default}`,
+                                borderRadius: 8,
+                                color: colors.text.primary,
+                                cursor: 'pointer',
+                                textAlign: 'left'
+                            }}
+                        >
+                            🔄 Switch Account ({accounts.length})
+                        </button>
+                    )}
+                    <button
+                        onClick={() => {/* open login modal for new account */ }}
+                        style={{
+                            width: '100%',
+                            padding: 12,
+                            background: 'transparent',
+                            border: 'none', // Subtle look
+                            borderRadius: 8,
+                            color: colors.text.primary,
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            fontSize: 13
+                        }}
+                    >
+                        ➕ Add another account
+                    </button>
+                </div>
+
+                <hr style={{ border: 0, height: 1, background: colors.border.light, margin: '8px 0' }} />
+
+                {/* Notifications */}
                 <button
-                    onClick={() => {/* open account switcher */}}
+                    onClick={() => { navigate('/notifications'); onClose(); }}
                     style={{
                         width: '100%',
                         padding: 12,
-                        marginTop: 8,
                         background: 'transparent',
-                        border: `1px solid ${colors.border.default}`,
+                        border: 'none',
                         borderRadius: 8,
-                        color: colors.text.primary,
+                        textAlign: 'left',
                         cursor: 'pointer',
+                        color: colors.text.primary,
                     }}
                 >
-                    🔄 Switch Account ({accounts.length})
+                    🔔 Notifications
+                    {notificationCount > 0 && (
+                        <span style={{
+                            float: 'right',
+                            background: colors.status.error.border,
+                            color: '#FFFFFF',
+                            borderRadius: 9999,
+                            padding: '2px 8px',
+                            fontSize: 12,
+                            fontWeight: 600,
+                        }}>
+                            {notificationCount}
+                        </span>
+                    )}
                 </button>
-            )}
-
-            <hr style={{ border: 0, height: 1, background: colors.border.light, margin: '8px 0' }} />
-
-            {/* Notifications */}
-            <button
-                onClick={() => { navigate('/notifications'); onClose(); }}
-                style={{
-                    width: '100%',
-                    padding: 12,
-                    background: 'transparent',
-                    border: 'none',
-                    borderRadius: 8,
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    color: colors.text.primary,
-                }}
-            >
-                🔔 Notifications
-                {notificationCount > 0 && (
-                    <span style={{
-                        float: 'right',
-                        background: colors.status.error.border,
-                        color: '#FFFFFF',
-                        borderRadius: 9999,
-                        padding: '2px 8px',
-                        fontSize: 12,
-                        fontWeight: 600,
-                    }}>
-                        {notificationCount}
-                    </span>
-                )}
-            </button>
 
                 <style>{`
                     @keyframes fadeIn {

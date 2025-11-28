@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { HeartIcon, ShoppingCartIcon, ShirtIcon, ClockIcon } from '../components/icons'
 
 function holidayMessage(date = new Date()) {
   const m = date.getMonth()+1; const d = date.getDate()
@@ -17,21 +18,21 @@ export function Home() {
       <div style={{ fontSize: 18 }}>{holidayMessage()}</div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, marginTop: 24 }}>
-        <Link to="/favorites" style={{ display: 'grid', placeItems: 'center', background: '#FFF1F2', borderRadius: 16, height: 140, textDecoration: 'none', color: '#2D3748' }}>
-          <div style={{ fontSize: 48 }}>❤️</div>
-          <div style={{ fontSize: 14 }}>My Favorites</div>
+        <Link to="/favorites" style={{ display: 'grid', placeItems: 'center', background: '#BE185D', borderRadius: 16, height: 140, textDecoration: 'none', color: '#FFFFFF' }}>
+          <HeartIcon size={64} filled />
+          <div style={{ fontSize: 16, fontWeight: 600 }}>My Favorites</div>
         </Link>
         <Link to="/cart" style={{ display: 'grid', placeItems: 'center', background: '#065F46', borderRadius: 16, height: 140, textDecoration: 'none', color: '#fff' }}>
-          <div style={{ fontSize: 48 }}>🛒</div>
-          <div style={{ fontSize: 14 }}>Cart</div>
+          <ShoppingCartIcon size={64} />
+          <div style={{ fontSize: 16, fontWeight: 600 }}>Cart</div>
         </Link>
         <Link to="/products" style={{ display: 'grid', placeItems: 'center', background: '#1E3A8A', borderRadius: 16, height: 140, textDecoration: 'none', color: '#fff' }}>
-          <div style={{ fontSize: 48 }}>👕</div>
-          <div style={{ fontSize: 14 }}>Browse Products</div>
+          <ShirtIcon size={64} />
+          <div style={{ fontSize: 16, fontWeight: 600 }}>Browse Products</div>
         </Link>
         <Link to="/orders" style={{ display: 'grid', placeItems: 'center', background: '#DBEAFE', borderRadius: 16, height: 140, textDecoration: 'none', color: '#2D3748' }}>
-          <div style={{ fontSize: 48 }}>🕒</div>
-          <div style={{ fontSize: 14 }}>Orders</div>
+          <ClockIcon size={64} />
+          <div style={{ fontSize: 16, fontWeight: 600 }}>Orders</div>
         </Link>
       </div>
     </div>

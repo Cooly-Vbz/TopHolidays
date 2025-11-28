@@ -8,7 +8,7 @@ import { getThemeColors } from '../lib/theme-colors'
 interface LocaleSelectorProps {
   isOpen: boolean
   onClose: () => void
-  anchorRef: React.RefObject<HTMLElement>
+  anchorRef: React.RefObject<HTMLElement | null>
 }
 
 export function LocaleSelector({ isOpen, onClose, anchorRef }: LocaleSelectorProps) {

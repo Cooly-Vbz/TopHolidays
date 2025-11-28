@@ -1,3 +1,6 @@
+import { test, expect } from 'vitest'
+import '@testing-library/jest-dom'
+import React from 'react'
 import { render, screen } from '@testing-library/react'
 
 function Hello() {
@@ -8,6 +11,3 @@ test('renders a simple component', () => {
   render(<Hello />)
   expect(screen.getByText('Hello')).toBeInTheDocument()
 })
-
-// command how to run server: 
-

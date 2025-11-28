@@ -1,7 +1,12 @@
 [
-  { "id": "p1", "title": "Festive Christmas Sweater", "price": 39.99, "image": "https://picsum.photos/seed/p1/600/800", "promoted": true },
-  { "id": "p2", "title": "Halloween Bat Tee", "price": 24.99, "image": "https://picsum.photos/seed/p2/600/800" },
-  { "id": "p3", "title": "Valentine Heart Hoodie", "price": 49.00, "image": "https://picsum.photos/seed/p3/600/800", "promoted": true },
-  { "id": "p4", "title": "New Year Fireworks Shirt", "price": 29.00, "image": "https://picsum.photos/seed/p4/600/800" },
-  { "id": "p5", "title": "Easter Bunny Tee", "price": 22.00, "image": "https://picsum.photos/seed/p5/600/800" }
+  { "id": "p1", "title": "Festive Christmas Sweater", "price": 39.99, "image": "https://picsum.photos/seed/p1/600/800", "promoted": true, "holiday": "christmas", "category": "shirts" },
+  { "id": "p2", "title": "Halloween Bat Tee", "price": 24.99, "image": "https://picsum.photos/seed/p2/600/800", "holiday": "halloween", "category": "shirts" },
+  { "id": "p3", "title": "Valentine Heart Hoodie", "price": 49.00, "image": "https://picsum.photos/seed/p3/600/800", "promoted": true, "holiday": "valentine", "category": "hoodies" },
+  { "id": "p4", "title": "New Year Fireworks Shirt", "price": 29.00, "image": "https://picsum.photos/seed/p4/600/800", "holiday": "newyear", "category": "shirts" },
+  { "id": "p5", "title": "Easter Bunny Tee", "price": 22.00, "image": "https://picsum.photos/seed/p5/600/800", "holiday": "easter", "category": "shirts" },
+  { "id": "p6", "title": "Christmas Tree Hoodie", "price": 45.00, "image": "https://picsum.photos/seed/p6/600/800", "holiday": "christmas", "category": "hoodies" },
+  { "id": "p7", "title": "Halloween Pumpkin Pants", "price": 35.00, "image": "https://picsum.photos/seed/p7/600/800", "holiday": "halloween", "category": "pants" },
+  { "id": "p8", "title": "Valentine Rose Cap", "price": 18.00, "image": "https://picsum.photos/seed/p8/600/800", "holiday": "valentine", "category": "accessories" },
+  { "id": "p9", "title": "New Year Celebration Hoodie", "price": 42.00, "image": "https://picsum.photos/seed/p9/600/800", "holiday": "newyear", "category": "hoodies" },
+  { "id": "p10", "title": "Easter Egg Accessories", "price": 15.00, "image": "https://picsum.photos/seed/p10/600/800", "holiday": "easter", "category": "accessories" }
 ]

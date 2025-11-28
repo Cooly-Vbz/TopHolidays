@@ -160,7 +160,7 @@ export function loadSettings(): AccountSettings {
         encrypted: new Uint8Array(parsed.encrypted),
         iv: new Uint8Array(parsed.iv),
       }
-      return decryptData(payload, secret) as AccountSettings
+      return decryptData(payload, secret) as unknown as AccountSettings
     }
     return { ...defaultSettings, ...parsed }
   } catch {

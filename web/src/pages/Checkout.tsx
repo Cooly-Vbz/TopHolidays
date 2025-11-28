@@ -206,9 +206,9 @@ export default function Checkout() {
     const address: OrderAddress = {
       fullName: form.fullName.trim(),
       email: form.email.trim(),
-      phone: form.phone.trim() || undefined,
+      phone: form.phone?.trim() || undefined,
       line1: form.line1.trim(),
-      line2: form.line2.trim() || undefined,
+      line2: form.line2?.trim() || undefined,
       city: form.city.trim(),
       postalCode: form.postalCode.trim(),
       country: form.country.trim(),
@@ -532,7 +532,7 @@ export default function Checkout() {
           {submitting ? 'Placing order…' : 'Place order'}
         </button>
       </form>
-    </div>
+    </div >
   )
 }
 

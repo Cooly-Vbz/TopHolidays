@@ -7,7 +7,7 @@ import ConnectionBanner from './components/ConnectionBanner'
 import AccountOverlay from './components/AccountOverlay'
 import Sidebar from './components/Sidebar'
 import LoadingScreen from './components/LoadingScreen'
-import InstallPrompt from './components/InstallPrompt'
+import PWAInstallButton from './components/PWAInstallButton'
 const Home = lazy(() => import('./pages/Home'))
 const Products = lazy(() => import('./pages/Products'))
 const ProductDetails = lazy(() => import('./pages/ProductDetails'))
@@ -41,7 +41,7 @@ function App() {
       {loading && <LoadingScreen />}
       <Navbar onMenu={() => setSidebarOpen(true)} onAccount={() => setAccountOpen(true)} />
       <ConnectionBanner />
-      {location.pathname === '/' && <InstallPrompt show={true} />}
+      {location.pathname === '/' && <PWAInstallButton />}
       <AccountOverlay open={accountOpen} onClose={() => setAccountOpen(false)} />
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <main style={{ paddingTop: 64, paddingBottom: 96 }}>

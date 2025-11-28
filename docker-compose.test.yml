@@ -1,0 +1,11 @@
+version: '3.9'
+
+services:
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      - NODE_ENV=test
+      - CI=true
+    command: npm run test:coverage

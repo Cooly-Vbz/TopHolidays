@@ -1,0 +1,15 @@
+FROM node:20-alpine AS test
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies including devDependencies
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Default command runs all tests
+CMD ["npm", "run", "test:all"]

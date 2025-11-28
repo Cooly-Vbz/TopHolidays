@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { useTheme } from './ThemeProvider'
 import { useAuth, type OAuthProvider } from './AuthProvider'
 import { getThemeColors } from '../lib/theme-colors'
-import { LocaleSelector, LocaleOption } from './LocaleSelector'
+import { LocaleSelector } from './LocaleSelector'
+import type { LocaleOption } from './LocaleSelector'
+import { listAccounts, switchAccount } from '../lib/auth'
+import { useNotifications } from '../contexts/NotificationsContext'
 
 interface AccountPopupProps {
     isOpen: boolean
@@ -27,9 +30,11 @@ export default function AccountPopup({
     const navigate = useNavigate()
     const colors = getThemeColors(theme)
     const popupRef = useRef<HTMLDivElement>(null)
-    const [notificationCount] = useState(0) // TODO: Connect to notification system
+    const { notifications } = useNotifications()
+    const notificationCount = notifications.filter(n => !n.read).length
     const [showSignUp, setShowSignUp] = useState(false)
     const [showLocaleSelector, setShowLocaleSelector] = useState(false)
+    const [accounts, setAccounts] = useState<Array<{ email: string; displayName?: string }>>([])
 
     // Calculate position relative to anchor
     const [position, setPosition] = useState({ top: 0, right: 0 })
@@ -101,9 +106,14 @@ export default function AccountPopup({
   }
 
   const handleLocaleClick = () => {
-    setShowLocaleSelector(!showLocaleSelector);
-  };
+    setShowLocaleSelector(!showLocaleSelector)
   }
+
+  useEffect(() => {
+    if (isOpen) {
+      listAccounts().then(setAccounts).catch(() => setAccounts([]))
+    }
+  }, [isOpen])
 
     const handleNotificationsClick = () => {
         navigate('/notifications')
@@ -176,7 +186,7 @@ export default function AccountPopup({
                         transition: 'background 0.2s',
                     }}
                     onMouseOver={(e) => e.currentTarget.style.background = colors.bg.tertiary}
-                                    onMouseOut={(e) => e.currentTarget.style.background = colors.bg.secondary}
+                    onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
                 >
                     <span style={{ fontSize: 20 }}>🌍</span>
                   {showLocaleSelector && (
@@ -241,6 +251,23 @@ export default function AccountPopup({
                     </div>
                 </div>
 
+                {/* Account Switcher */}
+                {accounts.length > 0 && (
+                  <div style={{ marginBottom: 8 }}>
+                    {accounts.map(acc => (
+                      <button key={acc.email}
+                        onClick={() => { try { switchAccount(acc.email); onClose(); window.location.reload(); } catch (e) { alert((e as Error).message) } }}
+                        style={{ width: '100%', padding: 10, background: 'transparent', border: `1px solid ${colors.border.default}`, borderRadius: 8, color: colors.text.primary, textAlign: 'left', cursor: 'pointer', marginBottom: 6 }}
+                      >
+                        <span style={{ fontWeight: 600 }}>{acc.displayName || acc.email}</span>
+                        {acc.displayName && (
+                          <span style={{ marginLeft: 6, color: colors.text.tertiary }}>({acc.email})</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 {user ? (
                     <>
                         <button
@@ -260,6 +287,21 @@ export default function AccountPopup({
                             Account Settings
                         </button>
                         <button
+                            onClick={() => { navigate('/auth'); onClose(); }}
+                            style={{
+                                width: '100%',
+                                padding: 12,
+                                background: 'transparent',
+                                border: `1px dashed ${colors.border.default}`,
+                                borderRadius: 8,
+                                color: colors.text.secondary,
+                                cursor: 'pointer',
+                                marginTop: 8,
+                            }}
+                        >
+                            Add another login
+                        </button>
+                        <button
                             onClick={handleSignOut}
                             style={{
                                 width: '100%',
@@ -275,21 +317,33 @@ export default function AccountPopup({
                         </button>
                     </>
                 ) : (
-                    <button
-                        onClick={() => { onOpenSettings(); onClose(); }}
-                        style={{
-                            width: '100%',
-                            padding: 12,
-                            background: colors.brand.primary,
-                            border: 'none',
-                            borderRadius: 8,
-                            color: '#FFFFFF',
-                            cursor: 'pointer',
-                            fontWeight: 600,
-                        }}
-                    >
-                        Sign In / Sign Up
-                    </button>
+                    <div>
+                        <button
+                            onClick={() => { setShowSignUp(true); navigate('/auth'); }}
+                            style={{
+                                width: '100%',
+                                padding: 12,
+                                background: colors.brand.primary,
+                                border: 'none',
+                                borderRadius: 8,
+                                color: '#FFFFFF',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                                marginBottom: 8,
+                            }}
+                        >
+                            Sign In / Sign Up
+                        </button>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+                          {(['google','facebook','apple','github'] as OAuthProvider[]).map(p => (
+                            <button key={p}
+                              onClick={() => handleOAuthSignIn(p)}
+                              title={`Sign in with ${p}`}
+                              style={{ padding: 10, borderRadius: 8, border: `1px solid ${colors.border.light}`, background: 'transparent', cursor: 'pointer' }}
+                            >{p === 'google' ? 'G' : p === 'facebook' ? 'f' : p === 'apple' ? '' : 'GH'}</button>
+                          ))}
+                        </div>
+                    </div>
                 )}
 
                 <hr style={{ border: 0, height: 1, background: colors.border.light, margin: '8px 0' }} />

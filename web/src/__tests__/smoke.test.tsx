@@ -8,3 +8,6 @@ test('renders a simple component', () => {
   render(<Hello />)
   expect(screen.getByText('Hello')).toBeInTheDocument()
 })
+
+// command how to run server: 
+

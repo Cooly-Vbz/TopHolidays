@@ -150,6 +150,24 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
               <span>Browse Products</span>
             </Link>
             <Link
+              to="/notifications"
+              onClick={onClose}
+              style={{
+                padding: '10px 12px',
+                borderRadius: 8,
+                textDecoration: 'none',
+                color: textColor,
+                background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                transition: 'background 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10
+              }}
+            >
+              <span>🔔</span>
+              <span>Notifications</span>
+            </Link>
+            <Link
               to="/cart"
               onClick={onClose}
               style={{

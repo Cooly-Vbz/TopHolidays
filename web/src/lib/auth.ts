@@ -1,6 +1,7 @@
 import { encryptionService } from './crypto'
 
 const USER_KEY = 'auth:user'
+const ACCOUNTS_KEY = 'auth:accounts'
 const SETTINGS_KEY = 'auth:settings'
 const SETTINGS_SECRET_KEY = 'auth:settings-secret'
 
@@ -85,6 +86,45 @@ function saveStored(user: StoredUser | null) {
   localStorage.setItem(USER_KEY, JSON.stringify(serializable))
 }
 
+function loadAccounts(): StoredUser[] {
+  try {
+    const raw = localStorage.getItem(ACCOUNTS_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.map((acc: any) => ({
+      email: acc.email,
+      passwordHash: acc.passwordHash,
+      encryptedProfile: {
+        encrypted: new Uint8Array(acc.encryptedProfile.encrypted),
+        iv: new Uint8Array(acc.encryptedProfile.iv),
+      },
+    }))
+  } catch {
+    return []
+  }
+}
+
+function saveAccounts(accounts: StoredUser[]) {
+  const serializable = accounts.map(acc => ({
+    email: acc.email,
+    passwordHash: acc.passwordHash,
+    encryptedProfile: {
+      encrypted: Array.from(acc.encryptedProfile.encrypted),
+      iv: Array.from(acc.encryptedProfile.iv),
+    },
+  }))
+  localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(serializable))
+}
+
+function upsertAccount(user: StoredUser) {
+  const accounts = loadAccounts()
+  const idx = accounts.findIndex(a => a.email === user.email)
+  if (idx >= 0) accounts[idx] = user
+  else accounts.push(user)
+  saveAccounts(accounts)
+}
+
 export async function signUp(email: string, password: string, displayName?: string) {
   const existing = loadStored()
   if (existing && existing.email === email) {
@@ -99,6 +139,7 @@ export async function signUp(email: string, password: string, displayName?: stri
   }
   const encryptedProfile = await encryptionService.encryptUserData(profile, passwordHash)
   saveStored({ email, passwordHash, encryptedProfile })
+  upsertAccount({ email, passwordHash, encryptedProfile })
   return profile
 }
 
@@ -113,6 +154,7 @@ export async function signIn(email: string, password: string): Promise<UserProfi
   }
   const profile = await encryptionService.decryptUserData(stored.encryptedProfile, passwordHash) as UserProfile
   localStorage.setItem('auth:current', JSON.stringify({ email }))
+  upsertAccount({ email, passwordHash, encryptedProfile: stored.encryptedProfile })
   return profile
 }
 
@@ -168,6 +210,7 @@ export async function signInWithOAuth(provider: 'google' | 'facebook' | 'apple' 
   const passwordHash = await hashPassword(mockData.email, `oauth_${provider}_${mockData.providerId}`)
   const encryptedProfile = await encryptionService.encryptUserData(profile, passwordHash)
   saveStored({ email: mockData.email, passwordHash, encryptedProfile })
+  upsertAccount({ email: mockData.email, passwordHash, encryptedProfile })
   localStorage.setItem('auth:current', JSON.stringify({ email: mockData.email }))
   return profile
 }
@@ -175,11 +218,10 @@ export async function signInWithOAuth(provider: 'google' | 'facebook' | 'apple' 
 export async function signUpWithOAuth(provider: 'google' | 'facebook' | 'apple' | 'github'): Promise<UserProfile> {
   return signInWithOAuth(provider) // Same implementation for sign up
 }
+export async function updateProfile(next: Partial<UserProfile>, password?: string): Promise<UserProfile> {
   const stored = loadStored()
   if (!stored) throw new Error('No local account stored.')
-  const passwordHash = password
-    ? await hashPassword(stored.email, password)
-    : stored.passwordHash
+  const passwordHash = password ? await hashPassword(stored.email, password) : stored.passwordHash
   if (passwordHash !== stored.passwordHash) {
     throw new Error('Incorrect password.')
   }
@@ -187,8 +229,37 @@ export async function signUpWithOAuth(provider: 'google' | 'facebook' | 'apple' 
   const updated: UserProfile = { ...current, ...next }
   const encryptedProfile = await encryptionService.encryptUserData(updated, passwordHash)
   saveStored({ email: stored.email, passwordHash, encryptedProfile })
+  upsertAccount({ email: stored.email, passwordHash, encryptedProfile })
   localStorage.setItem('auth:current', JSON.stringify({ email: stored.email }))
   return updated
+}
+
+export async function listAccounts(): Promise<Array<{ email: string; displayName?: string }>> {
+  const accounts = loadAccounts()
+  const result: Array<{ email: string; displayName?: string }> = []
+  for (const acc of accounts) {
+    try {
+      const profile = await encryptionService.decryptUserData(acc.encryptedProfile, acc.passwordHash) as UserProfile
+      result.push({ email: acc.email, displayName: profile.displayName })
+    } catch {
+      result.push({ email: acc.email })
+    }
+  }
+  return result
+}
+
+export function switchAccount(email: string): void {
+  const accounts = loadAccounts()
+  const match = accounts.find(a => a.email === email)
+  if (!match) throw new Error('Account not found on this device.')
+  localStorage.setItem('auth:current', JSON.stringify({ email }))
+}
+
+export function isDevUser(user: UserProfile | null): boolean {
+  const devEmails = ['dev@topholidays.dev', 'dev@localhost']
+  const name = user?.displayName?.toLowerCase() || ''
+  const email = user?.email?.toLowerCase() || ''
+  return name === 'dev' || devEmails.includes(email)
 }
 
 export function loadSettings(): AccountSettings {

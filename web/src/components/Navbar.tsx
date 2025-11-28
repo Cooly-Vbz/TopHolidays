@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useTheme } from './ThemeProvider'
 import { useAuth } from './AuthProvider'
 import AccountPopup from './AccountPopup'
+import NotificationBell from './NotificationBell'
 
 function useCartCount() {
   const [count, setCount] = useState(0)
@@ -38,7 +39,7 @@ function currentTheme() {
   return 'default';
 }
 
-export default function Navbar({ onMenu, onAccount }: { onMenu: () => void, onAccount: () => void }) {
+export default function Navbar({ onMenu, onAccount, isSidebarOpen }: { onMenu: () => void, onAccount: () => void, isSidebarOpen?: boolean }) {
   const cartCount = useCartCount()
   const navigate = useNavigate()
   const location = useLocation()
@@ -68,7 +69,8 @@ export default function Navbar({ onMenu, onAccount }: { onMenu: () => void, onAc
       position: 'fixed', top: 0, left: 0, right: 0, height: 64,
       background: bgColor, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 8px rgba(0,0,0,0.06)', zIndex: 999,
       display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 12px',
-      transition: 'background-color 0.3s, color 0.3s'
+      transition: 'background-color 0.3s, color 0.3s',
+      filter: isSidebarOpen ? 'brightness(0.75)' : 'none'
     }}>
       <button aria-label="Menu" onClick={onMenu} style={{
         width: 40, height: 40, borderRadius: 8, border: 'none', background: buttonBg, color: buttonColor, cursor: 'pointer'
@@ -99,6 +101,7 @@ export default function Navbar({ onMenu, onAccount }: { onMenu: () => void, onAc
       </button>
 
       <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+        <NotificationBell onClick={() => navigate('/notifications')} />
         <button onClick={onCart} aria-label="Cart" style={{ position: 'relative', width: 40, height: 40, borderRadius: 20, border: 'none', cursor: 'pointer', background: isCartRoute ? '#F59E0B' : buttonBg, color: isCartRoute ? '#fff' : buttonColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, lineHeight: 1 }}>
           🛒
           {cartCount > 0 && (

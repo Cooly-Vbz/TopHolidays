@@ -27,3 +27,18 @@ export async function decryptData(payload: { encrypted: Uint8Array; iv: Uint8Arr
   )
   return JSON.parse(new TextDecoder().decode(dec))
 }
+
+export const encryptionService = {
+  async encryptUserData(data: unknown, passwordHash: string) {
+    return encryptData(data, passwordHash)
+  },
+  async decryptUserData(payload: { encrypted: Uint8Array; iv: Uint8Array }, passwordHash: string) {
+    return decryptData(payload, passwordHash)
+  },
+  async encryptSettingsData(data: unknown, passwordHash: string) {
+    return encryptData(data, passwordHash)
+  },
+  async decryptSettingsData(payload: { encrypted: Uint8Array; iv: Uint8Array }, passwordHash: string) {
+    return decryptData(payload, passwordHash)
+  },
+}

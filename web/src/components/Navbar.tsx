@@ -39,20 +39,15 @@ function currentTheme() {
   return 'default';
 }
 
-export default function Navbar({ onMenu, onAccount, isSidebarOpen }: { onMenu: () => void, onAccount: () => void, isSidebarOpen?: boolean }) {
+export default function Navbar({ onMenu, isSidebarOpen }: { onMenu: () => void, onAccount?: () => void, isSidebarOpen?: boolean }) {
   const cartCount = useCartCount()
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useAuth()
   const { theme: appTheme } = useTheme()
   const [showAccountPopup, setShowAccountPopup] = useState(false)
-  const [currentLocale, setCurrentLocale] = useState('en-US')
   const accountButtonRef = useRef<HTMLButtonElement>(null)
   const onCart = () => navigate('/cart')
-
-  const handleLocaleChange = (locale: any) => {
-    setCurrentLocale(locale.code);
-  };
 
   const onHome = () => navigate('/')
   const isCartRoute = location.pathname.startsWith('/cart')
@@ -67,7 +62,7 @@ export default function Navbar({ onMenu, onAccount, isSidebarOpen }: { onMenu: (
   return (
     <nav style={{
       position: 'fixed', top: 0, left: 0, right: 0, height: 64,
-      background: bgColor, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 8px rgba(0,0,0,0.06)', zIndex: 999,
+      background: bgColor, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 8px rgba(0,0,0,0.06)', zIndex: 1000,
       display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 12px',
       transition: 'background-color 0.3s, color 0.3s',
       filter: isSidebarOpen ? 'brightness(0.75)' : 'none'
@@ -133,9 +128,6 @@ export default function Navbar({ onMenu, onAccount, isSidebarOpen }: { onMenu: (
         isOpen={showAccountPopup}
         onClose={() => setShowAccountPopup(false)}
         anchorRef={accountButtonRef}
-        onOpenSettings={onAccount}
-        currentLocale={currentLocale}
-        onLocaleChange={handleLocaleChange}
       />
     </nav>
   )

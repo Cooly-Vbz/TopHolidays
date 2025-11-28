@@ -14,6 +14,7 @@ export default function AccountOverlay({ open, onClose }: { open: boolean; onClo
   const [displayName, setDisplayName] = useState('')
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [closing, setClosing] = useState(false)
 
   const isDark = theme === 'dark'
   const bgColor = isDark ? '#1E293B' : '#FFFFFF'
@@ -23,7 +24,16 @@ export default function AccountOverlay({ open, onClose }: { open: boolean; onClo
   const inputBg = isDark ? '#0F172A' : '#FFFFFF'
   const inputBorder = isDark ? '#374151' : '#D1D5DB'
 
-  if (!open) return null
+  // Keep mounted during closing animation
+  if (!open && !closing) return null
+
+  const requestClose = () => {
+    setClosing(true)
+    setTimeout(() => {
+      setClosing(false)
+      onClose()
+    }, 250)
+  }
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -262,13 +272,13 @@ export default function AccountOverlay({ open, onClose }: { open: boolean; onClo
 
   return (
     <div role="dialog" aria-modal style={{ position: 'fixed', inset: 0, zIndex: 1100 }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)', transition: 'opacity 300ms' }} />
-      <div style={{ position: 'absolute', top: '10%', left: '10%', right: '10%', bottom: '10%', background: bgColor, borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.2)', overflow: 'auto', animation: 'fadeIn 300ms', maxHeight: '80vh', color: textColor }}>
+      <div onClick={requestClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)', transition: 'opacity 250ms', opacity: closing ? 0 : 1 }} />
+      <div style={{ position: 'absolute', top: '10%', left: '10%', right: '10%', bottom: '10%', background: bgColor, borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.2)', overflow: 'auto', transition: 'transform 250ms, opacity 250ms', transform: closing ? 'translateY(8px)' : 'translateY(0)', opacity: closing ? 0 : 1, maxHeight: '80vh', color: textColor }}>
         <style>{`@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
         @media (max-width: 768px) { .ao-grid { grid-template-columns: 1fr } }`}</style>
         <header style={{ padding: 12, borderBottom: `1px solid ${borderColor}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ fontWeight: 700 }}>Account Settings</div>
-          <button onClick={onClose} aria-label="Close" style={{ border: 'none', background: 'transparent', fontSize: 18, cursor: 'pointer' }}>⬇️</button>
+          <button onClick={requestClose} aria-label="Close" style={{ border: 'none', background: 'transparent', fontSize: 18, cursor: 'pointer' }}>⬇️</button>
         </header>
         <div className="ao-grid" style={{ display: 'grid', gridTemplateColumns: '200px 1fr', height: 'calc(100% - 48px)' }}>
           <aside style={{ borderRight: `1px solid ${borderColor}`, padding: 12, overflow: 'auto' }}>

@@ -1,9 +1,6 @@
 import { GoogleLogin } from '@react-oauth/google'
-// @ts-ignore - No types available for this package
-import FacebookLogin from 'react-facebook-login/dist/facebook-login-render-props'
-// @ts-ignore - No types available
-import AppleLogin from 'react-apple-login'
-import { oauthConfig, handleOAuthCallback, UserProfile } from '../lib/oauth-providers'
+import { handleOAuthCallback } from '../lib/oauth-providers'
+import type { UserProfile } from '../lib/auth'
 import { useTheme } from './ThemeProvider'
 import { getThemeColors } from '../lib/theme-colors'
 
@@ -15,23 +12,6 @@ interface OAuthButtonsProps {
 export default function OAuthButtons({ onSuccess, onError }: OAuthButtonsProps) {
     const { theme } = useTheme()
     const colors = getThemeColors(theme)
-
-    const buttonStyle = {
-        width: '100%',
-        padding: '10px',
-        borderRadius: '8px',
-        border: `1px solid ${colors.border.default}`,
-        background: 'transparent',
-        color: colors.text.primary,
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '10px',
-        fontWeight: 500,
-        fontSize: '14px',
-        marginBottom: '8px'
-    }
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -51,45 +31,63 @@ export default function OAuthButtons({ onSuccess, onError }: OAuthButtonsProps) 
                 />
             </div>
 
-            {/* Facebook */}
-            <FacebookLogin
-                appId={oauthConfig.facebook.appId}
-                autoLoad={false}
-                fields="name,email,picture"
-                callback={(response: any) => {
-                    if (response.status !== 'unknown') {
-                        handleOAuthCallback('facebook', response)
-                            .then(onSuccess)
-                            .catch(err => onError(err.message))
-                    }
-                }}
-                render={(renderProps: any) => (
-                    <button onClick={renderProps.onClick} style={{ ...buttonStyle, borderColor: '#1877F2', color: '#1877F2' }}>
-                        <span style={{ fontSize: 18 }}>f</span>
-                        Continue with Facebook
-                    </button>
-                )}
-            />
-
-            {/* Apple */}
-            <button style={{ ...buttonStyle, borderColor: colors.text.primary }}>
-                <span style={{ fontSize: 18 }}></span>
-                Continue with Apple
-            </button>
-
-            {/* GitHub */}
-            <button
-                onClick={() => {
-                    // Simulate GitHub flow
-                    handleOAuthCallback('github', { code: 'mock-code' })
-                        .then(onSuccess)
-                        .catch(err => onError(err.message))
-                }}
-                style={{ ...buttonStyle, background: '#24292e', color: '#ffffff', border: 'none' }}
-            >
-                <span style={{ fontSize: 18 }}>🐙</span>
-                Continue with GitHub
-            </button>
+            {/* Other providers - placeholders for now */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                <button
+                    onClick={() => onError('Facebook login coming soon')}
+                    style={{
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: `1px solid ${colors.border.default}`,
+                        background: 'transparent',
+                        color: colors.text.primary,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '14px'
+                    }}
+                    title="Facebook (Coming Soon)"
+                >
+                    📘
+                </button>
+                <button
+                    onClick={() => onError('Apple login coming soon')}
+                    style={{
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: `1px solid ${colors.border.default}`,
+                        background: 'transparent',
+                        color: colors.text.primary,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '14px'
+                    }}
+                    title="Apple (Coming Soon)"
+                >
+                    🍎
+                </button>
+                <button
+                    onClick={() => onError('GitHub login coming soon')}
+                    style={{
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: `1px solid ${colors.border.default}`,
+                        background: 'transparent',
+                        color: colors.text.primary,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '14px'
+                    }}
+                    title="GitHub (Coming Soon)"
+                >
+                    🐙
+                </button>
+            </div>
         </div>
     )
 }

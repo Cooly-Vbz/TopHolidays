@@ -3,6 +3,7 @@ import { Routes, Route, Link, useLocation } from 'react-router-dom'
 import { Suspense, lazy } from 'react'
 import './App.css'
 import Navbar from './components/Navbar'
+import PageTransition from './components/PageTransition'
 import { NotificationsProvider } from './contexts/NotificationsContext'
 import { LocaleProvider } from './contexts/LocaleContext'
 import ConnectionBanner from './components/ConnectionBanner'
@@ -51,25 +52,25 @@ function App() {
           <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
           <main style={{ paddingTop: 64, paddingBottom: 96 }}>
             <Suspense fallback={<div style={{ padding: 16 }}>Loading...</div>}>
-              <Routes>
-              <Route path="/" element={<div style={{ animation: 'fadeIn 250ms ease-out' }}><Home /></div>} />
-              <Route path="/products" element={<div style={{ animation: 'fadeIn 250ms ease-out' }}><Products /></div>} />
-              <Route path="/products/:id" element={<div style={{ animation: 'fadeIn 250ms ease-out' }}><ProductDetails /></div>} />
-              <Route path="/cart" element={<div style={{ animation: 'fadeIn 250ms ease-out' }}><Cart /></div>} />
-              <Route path="/checkout" element={<div style={{ animation: 'fadeIn 250ms ease-out' }}><Checkout /></div>} />
-              <Route path="/order-confirmation/:id" element={<div style={{ animation: 'fadeIn 250ms ease-out' }}><OrderConfirmation /></div>} />
-              <Route path="/favorites" element={<div style={{ animation: 'fadeIn 250ms ease-out' }}><Favorites /></div>} />
-              <Route path="/orders" element={<div style={{ animation: 'fadeIn 250ms ease-out' }}><Orders /></div>} />
-              <Route path="/customer-care" element={<div style={{ animation: 'fadeIn 250ms ease-out' }}><CustomerCare /></div>} />
-              <Route path="/about" element={<div style={{ animation: 'fadeIn 250ms ease-out' }}><About /></div>} />
-              <Route path="/eula" element={<div style={{ animation: 'fadeIn 250ms ease-out' }}><Eula /></div>} />
-              <Route path="/privacy" element={<div style={{ animation: 'fadeIn 250ms ease-out' }}><Privacy /></div>} />
-              <Route path="/notifications" element={<div style={{ animation: 'fadeIn 250ms ease-out' }}><NotificationsPage /></div>} />
-              <Route path="*" element={<div style={{ padding: 16 }}>Not Found. <Link to="/">Go Home</Link></div>} />
+            <Routes>
+              <Route path="/" element={<PageTransition><Home /></PageTransition>} />
+              <Route path="/products" element={<PageTransition><Products /></PageTransition>} />
+              <Route path="/products/:id" element={<PageTransition><ProductDetails /></PageTransition>} />
+              <Route path="/cart" element={<PageTransition><Cart /></PageTransition>} />
+              <Route path="/checkout" element={<PageTransition><Checkout /></PageTransition>} />
+              <Route path="/order-confirmation/:id" element={<PageTransition><OrderConfirmation /></PageTransition>} />
+              <Route path="/favorites" element={<PageTransition><Favorites /></PageTransition>} />
+              <Route path="/orders" element={<PageTransition><Orders /></PageTransition>} />
+              <Route path="/customer-care" element={<PageTransition><CustomerCare /></PageTransition>} />
+              <Route path="/about" element={<PageTransition><About /></PageTransition>} />
+              <Route path="/eula" element={<PageTransition><Eula /></PageTransition>} />
+              <Route path="/privacy" element={<PageTransition><Privacy /></PageTransition>} />
+              <Route path="/notifications" element={<PageTransition><NotificationsPage /></PageTransition>} />
+              <Route path="*" element={<PageTransition><div style={{ padding: 16 }}>Not Found. <Link to="/">Go Home</Link></div></PageTransition>} />
             </Routes>
-          </Suspense>
-          <style>{`@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
-        </main>
+            </Suspense>
+            <style>{`@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
+          </main>
         </NotificationsProvider>
       </div>
     </LocaleProvider>

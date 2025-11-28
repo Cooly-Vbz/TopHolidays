@@ -8,6 +8,7 @@ import { LocaleSelector } from './LocaleSelector'
 import { LocaleContext } from '../contexts/LocaleContext'
 import { LOCALES } from '../lib/locales'
 import { listAccounts } from '../lib/auth'
+import OAuthButtons from './OAuthButtons'
 
 interface AccountPopupProps {
     isOpen: boolean
@@ -23,7 +24,7 @@ export default function AccountPopup({
     onOpenSettings
 }: AccountPopupProps) {
     const { theme } = useTheme()
-    const { user, signOut } = useAuth()
+    const { user, signOut, switchToAccount } = useAuth()
     const { locale } = useContext(LocaleContext)
     const navigate = useNavigate()
     const colors = getThemeColors(theme)
@@ -31,6 +32,9 @@ export default function AccountPopup({
     const { notifications } = useNotifications()
     const notificationCount = notifications.filter(n => !n.read).length
     const [showLocaleSelector, setShowLocaleSelector] = useState(false)
+    const [showLogin, setShowLogin] = useState(false)
+    const [showSwitcher, setShowSwitcher] = useState(false)
+    const [isAddingAccount, setIsAddingAccount] = useState(false)
     const [accounts, setAccounts] = useState<Array<{ email: string; displayName?: string }>>([])
 
     // Calculate position relative to anchor
@@ -68,6 +72,8 @@ export default function AccountPopup({
     }, [isOpen, onClose])
 
     if (!isOpen) return null
+
+    const showLoginView = showLogin || isAddingAccount
 
     return (
         <>
@@ -114,24 +120,26 @@ export default function AccountPopup({
                     }}
                 >
                     🌍 Locale & Currency
-                    <div style={{ fontSize: 12, color: colors.text.tertiary }}>
+                    <span style={{ fontSize: 12, color: colors.text.tertiary }}>
                         {LOCALES[locale].name} • {LOCALES[locale].currency}
-                    </div>
+                    </span>
                 </button>
 
                 <hr style={{ border: 0, height: 1, background: colors.border.light, margin: '8px 0' }} />
 
-                {/* Current Login */}
-                <div style={{ padding: 12 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: colors.text.primary }}>
-                        {user?.displayName || 'Guest User'}
+                {/* Current Login Info (only if not adding account) */}
+                {!isAddingAccount && (
+                    <div style={{ padding: 12 }}>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: colors.text.primary }}>
+                            {user?.displayName || 'Guest User'}
+                        </div>
+                        <div style={{ fontSize: 12, color: colors.text.tertiary }}>
+                            {user?.email || 'Not signed in'}
+                        </div>
                     </div>
-                    <div style={{ fontSize: 12, color: colors.text.tertiary }}>
-                        {user?.email || 'Not signed in'}
-                    </div>
-                </div>
+                )}
 
-                {user ? (
+                {user && !showLoginView ? (
                     <>
                         <button
                             onClick={() => { onClose(); onOpenSettings?.(); }}
@@ -163,10 +171,126 @@ export default function AccountPopup({
                         >
                             Sign Out
                         </button>
+
+                        {/* Account Switcher Section */}
+                        <div style={{ marginTop: 12, borderTop: `1px solid ${colors.border.light}`, paddingTop: 12 }}>
+                            {showSwitcher ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                                        <span style={{ fontSize: 12, fontWeight: 600, color: colors.text.secondary }}>Switch Account</span>
+                                        <button
+                                            onClick={() => setShowSwitcher(false)}
+                                            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: colors.brand.primary }}
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                    {accounts.map(acc => (
+                                        <button
+                                            key={acc.email}
+                                            onClick={() => {
+                                                if (acc.email !== user.email) {
+                                                    switchToAccount(acc.email)
+                                                    onClose()
+                                                }
+                                            }}
+                                            disabled={acc.email === user.email}
+                                            style={{
+                                                width: '100%',
+                                                padding: 8,
+                                                background: acc.email === user.email ? colors.bg.secondary : 'transparent',
+                                                border: `1px solid ${colors.border.default}`,
+                                                borderRadius: 8,
+                                                color: colors.text.primary,
+                                                cursor: acc.email === user.email ? 'default' : 'pointer',
+                                                textAlign: 'left',
+                                                opacity: acc.email === user.email ? 0.7 : 1
+                                            }}
+                                        >
+                                            <div style={{ fontWeight: 500 }}>{acc.displayName || 'User'}</div>
+                                            <div style={{ fontSize: 11, color: colors.text.tertiary }}>{acc.email}</div>
+                                        </button>
+                                    ))}
+                                    <button
+                                        onClick={() => setIsAddingAccount(true)}
+                                        style={{
+                                            width: '100%',
+                                            padding: 8,
+                                            background: 'transparent',
+                                            border: '1px dashed ' + colors.border.default,
+                                            borderRadius: 8,
+                                            color: colors.brand.primary,
+                                            cursor: 'pointer',
+                                            fontSize: 13,
+                                            marginTop: 4
+                                        }}
+                                    >
+                                        + Add another account
+                                    </button>
+                                </div>
+                            ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                    {accounts.length > 1 && (
+                                        <button
+                                            onClick={() => setShowSwitcher(true)}
+                                            style={{
+                                                width: '100%',
+                                                padding: 12,
+                                                background: 'transparent',
+                                                border: `1px solid ${colors.border.default}`,
+                                                borderRadius: 8,
+                                                color: colors.text.primary,
+                                                cursor: 'pointer',
+                                                textAlign: 'left'
+                                            }}
+                                        >
+                                            🔄 Switch Account ({accounts.length})
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => setIsAddingAccount(true)}
+                                        style={{
+                                            width: '100%',
+                                            padding: 12,
+                                            background: 'transparent',
+                                            border: 'none',
+                                            borderRadius: 8,
+                                            color: colors.text.primary,
+                                            cursor: 'pointer',
+                                            textAlign: 'left',
+                                            fontSize: 13
+                                        }}
+                                    >
+                                        ➕ Add another account
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </>
+                ) : showLoginView ? (
+                    <div>
+                        <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <button
+                                onClick={() => {
+                                    setShowLogin(false)
+                                    setIsAddingAccount(false)
+                                }}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, padding: 4, color: colors.text.primary }}
+                            >
+                                ←
+                            </button>
+                            <span style={{ fontWeight: 600, color: colors.text.primary }}>
+                                {isAddingAccount ? 'Add Account' : 'Sign In'}
+                            </span>
+                        </div>
+                        <OAuthButtons
+                            onSuccess={() => { onClose(); setShowLogin(false); setIsAddingAccount(false); }}
+                            onError={(err) => console.error(err)}
+                        />
+                    </div>
                 ) : (
                     <button
-                        onClick={() => {/* open login modal */ }}
+                        onClick={() => setShowLogin(true)}
                         style={{
                             width: '100%',
                             padding: 12,
@@ -181,42 +305,6 @@ export default function AccountPopup({
                         Sign In / Sign Up
                     </button>
                 )}
-
-                <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    {accounts.length > 0 && (
-                        <button
-                            onClick={() => {/* open account switcher */ }}
-                            style={{
-                                width: '100%',
-                                padding: 12,
-                                background: 'transparent',
-                                border: `1px solid ${colors.border.default}`,
-                                borderRadius: 8,
-                                color: colors.text.primary,
-                                cursor: 'pointer',
-                                textAlign: 'left'
-                            }}
-                        >
-                            🔄 Switch Account ({accounts.length})
-                        </button>
-                    )}
-                    <button
-                        onClick={() => {/* open login modal for new account */ }}
-                        style={{
-                            width: '100%',
-                            padding: 12,
-                            background: 'transparent',
-                            border: 'none', // Subtle look
-                            borderRadius: 8,
-                            color: colors.text.primary,
-                            cursor: 'pointer',
-                            textAlign: 'left',
-                            fontSize: 13
-                        }}
-                    >
-                        ➕ Add another account
-                    </button>
-                </div>
 
                 <hr style={{ border: 0, height: 1, background: colors.border.light, margin: '8px 0' }} />
 

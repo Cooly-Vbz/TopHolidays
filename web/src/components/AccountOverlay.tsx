@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from './AuthProvider'
 import { useTheme } from './ThemeProvider'
 
@@ -23,6 +23,20 @@ export default function AccountOverlay({ open, onClose }: { open: boolean; onClo
   const borderColor = isDark ? '#374151' : '#E5E7EB'
   const inputBg = isDark ? '#0F172A' : '#FFFFFF'
   const inputBorder = isDark ? '#374151' : '#D1D5DB'
+
+  // Keyboard navigation support
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && open) {
+        requestClose()
+      }
+    }
+
+    if (open) {
+      document.addEventListener('keydown', handleKeyDown)
+      return () => document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [open])
 
   // Keep mounted during closing animation
   if (!open && !closing) return null

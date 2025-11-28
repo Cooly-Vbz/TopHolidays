@@ -1,12 +1,110 @@
 [
-  { "id": "p1", "title": "Festive Christmas Sweater", "price": 39.99, "image": "https://picsum.photos/seed/p1/600/800", "promoted": true, "holiday": "christmas", "category": "shirts" },
-  { "id": "p2", "title": "Halloween Bat Tee", "price": 24.99, "image": "https://picsum.photos/seed/p2/600/800", "holiday": "halloween", "category": "shirts" },
-  { "id": "p3", "title": "Valentine Heart Hoodie", "price": 49.00, "image": "https://picsum.photos/seed/p3/600/800", "promoted": true, "holiday": "valentine", "category": "hoodies" },
-  { "id": "p4", "title": "New Year Fireworks Shirt", "price": 29.00, "image": "https://picsum.photos/seed/p4/600/800", "holiday": "newyear", "category": "shirts" },
-  { "id": "p5", "title": "Easter Bunny Tee", "price": 22.00, "image": "https://picsum.photos/seed/p5/600/800", "holiday": "easter", "category": "shirts" },
-  { "id": "p6", "title": "Christmas Tree Hoodie", "price": 45.00, "image": "https://picsum.photos/seed/p6/600/800", "holiday": "christmas", "category": "hoodies" },
-  { "id": "p7", "title": "Halloween Pumpkin Pants", "price": 35.00, "image": "https://picsum.photos/seed/p7/600/800", "holiday": "halloween", "category": "pants" },
-  { "id": "p8", "title": "Valentine Rose Cap", "price": 18.00, "image": "https://picsum.photos/seed/p8/600/800", "holiday": "valentine", "category": "accessories" },
-  { "id": "p9", "title": "New Year Celebration Hoodie", "price": 42.00, "image": "https://picsum.photos/seed/p9/600/800", "holiday": "newyear", "category": "hoodies" },
-  { "id": "p10", "title": "Easter Egg Accessories", "price": 15.00, "image": "https://picsum.photos/seed/p10/600/800", "holiday": "easter", "category": "accessories" }
+  {
+    "id": 1,
+    "name": "Christmas Shirt",
+    "category": "shirts",
+    "holiday": "christmas",
+    "price": 24.99,
+    "description": "Festive Christmas shirt with holiday prints",
+    "image": "/images/christmas.svg"
+  },
+  {
+    "id": 2,
+    "name": "Christmas Hoodie",
+    "category": "hoodies",
+    "holiday": "christmas",
+    "price": 39.99,
+    "description": "Warm hoodie for Christmas season",
+    "image": "/images/christmas.svg"
+  },
+  {
+    "id": 3,
+    "name": "Christmas Pants",
+    "category": "pants",
+    "holiday": "christmas",
+    "price": 29.99,
+    "description": "Comfortable pants with Christmas theme",
+    "image": "/images/christmas.svg"
+  },
+  {
+    "id": 4,
+    "name": "New Years Shirt",
+    "category": "shirts",
+    "holiday": "new_years",
+    "price": 24.99,
+    "description": "Sparkly shirt for New Year's celebration",
+    "image": "/images/new_years.svg"
+  },
+  {
+    "id": 5,
+    "name": "New Years Hoodie",
+    "category": "hoodies",
+    "holiday": "new_years",
+    "price": 39.99,
+    "description": "Cozy hoodie for New Year's eve",
+    "image": "/images/new_years.svg"
+  },
+  {
+    "id": 6,
+    "name": "New Years Pants",
+    "category": "pants",
+    "holiday": "new_years",
+    "price": 29.99,
+    "description": "Stylish pants for New Year's party",
+    "image": "/images/new_years.svg"
+  },
+  {
+    "id": 7,
+    "name": "Valentines Shirt",
+    "category": "shirts",
+    "holiday": "valentines",
+    "price": 24.99,
+    "description": "Romantic shirt for Valentine's Day",
+    "image": "/images/valentines.svg"
+  },
+  {
+    "id": 8,
+    "name": "Valentines Hoodie",
+    "category": "hoodies",
+    "holiday": "valentines",
+    "price": 39.99,
+    "description": "Cute hoodie for Valentine's",
+    "image": "/images/valentines.svg"
+  },
+  {
+    "id": 9,
+    "name": "Valentines Pants",
+    "category": "pants",
+    "holiday": "valentines",
+    "price": 29.99,
+    "description": "Lovely pants for Valentine's date",
+    "image": "/images/valentines.svg"
+  },
+  {
+    "id": 10,
+    "name": "Easter Shirt",
+    "category": "shirts",
+    "holiday": "easter",
+    "price": 24.99,
+    "description": "Colorful shirt for Easter",
+    "image": "/images/easter.svg"
+  },
+  {
+    "id": 11,
+    "name": "Easter Hoodie",
+    "category": "hoodies",
+    "holiday": "easter",
+    "price": 39.99,
+    "description": "Fun hoodie for Easter egg hunt",
+    "image": "/images/easter.svg"
+  },
+  {
+    "id": 12,
+    "name": "Easter Pants",
+    "category": "pants",
+    "holiday": "easter",
+    "price": 29.99,
+    "description": "Spring pants for Easter",
+    "image": "/images/easter.svg"
+  }
 ]

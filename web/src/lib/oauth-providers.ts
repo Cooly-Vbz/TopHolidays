@@ -1,3 +1,6 @@
+import { signInWithOAuth } from './auth'
+import type { UserProfile } from './auth'
+
 export type OAuthProvider = 'google' | 'facebook' | 'apple' | 'github'
 
 export interface OAuthConfig {
@@ -30,32 +33,16 @@ export const oauthConfig: OAuthConfig = {
     }
 }
 
-export interface UserProfile {
-    id: string
-    email: string
-    displayName: string
-    photoURL?: string
-    provider: OAuthProvider
-}
-
 export async function handleOAuthCallback(
     provider: OAuthProvider,
     response: any
 ): Promise<UserProfile> {
-    // In a real app, you would send the token to your backend
-    // For this demo, we'll simulate decoding the token or fetching user info
-
     console.log(`Handling ${provider} callback:`, response)
 
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 800))
 
-    // Mock user data based on provider
-    return {
-        id: `${provider}_${Date.now()}`,
-        email: `user@${provider}.com`,
-        displayName: `${provider.charAt(0).toUpperCase() + provider.slice(1)} User`,
-        photoURL: `https://ui-avatars.com/api/?name=${provider}+User&background=random`,
-        provider
-    }
+    // Use the auth service to sign in/up and persist the session
+    // We cast the provider string to the specific union type expected by auth.ts
+    return signInWithOAuth(provider as 'google' | 'facebook' | 'apple' | 'github')
 }

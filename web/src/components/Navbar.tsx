@@ -4,6 +4,7 @@ import { useTheme } from './ThemeProvider'
 import { useAuth } from './AuthProvider'
 import AccountPopup from './AccountPopup'
 import NotificationBell from './NotificationBell'
+import { Z_INDEX } from '../lib/constants'
 
 function useCartCount() {
   const [count, setCount] = useState(0)
@@ -62,7 +63,7 @@ export default function Navbar({ onMenu, onAccount, isSidebarOpen }: { onMenu: (
   return (
     <nav style={{
       position: 'fixed', top: 0, left: 0, right: 0, height: 64,
-      background: bgColor, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 8px rgba(0,0,0,0.06)', zIndex: 900,
+      background: bgColor, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 8px rgba(0,0,0,0.06)', zIndex: Z_INDEX.navbar,
       display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 12px',
       transition: 'background-color 0.3s, color 0.3s',
       filter: isSidebarOpen ? 'brightness(0.75)' : 'none'

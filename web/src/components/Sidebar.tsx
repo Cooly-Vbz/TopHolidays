@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useTheme } from './ThemeProvider'
+import { useEffect } from 'react'
+import { Z_INDEX } from '../lib/constants'
 
 export default function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { theme, toggleTheme } = useTheme()
@@ -10,19 +12,33 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
   const borderColor = isDark ? '#1E293B' : '#E5E7EB'
   const mutedColor = isDark ? '#9CA3AF' : '#718096'
 
+  // Keyboard navigation support
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && open) {
+        onClose()
+      }
+    }
+
+    if (open) {
+      document.addEventListener('keydown', handleKeyDown)
+      return () => document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [open, onClose])
+
   return (
     <>
       <div aria-hidden={!open} onClick={onClose} style={{
         position: 'fixed', inset: 0, background: open ? 'rgba(0,0,0,0.9)' : 'transparent',
         backdropFilter: open ? 'blur(3px)' : 'none',
-        transition: 'background 350ms', zIndex: 999, pointerEvents: open ? 'auto' : 'none'
+        transition: 'background 350ms', zIndex: Z_INDEX.sidebar - 1, pointerEvents: open ? 'auto' : 'none'
       }} />
 
       <aside role="dialog" aria-modal={open} style={{
         position: 'fixed', top: 0, left: 0, height: '100vh', width: '75vw', maxWidth: 320,
         background: bgColor,
         boxShadow: '2px 0 12px rgba(0,0,0,0.2)',
-        zIndex: 1000,
+        zIndex: Z_INDEX.sidebar,
         transform: open ? 'translateX(0%)' : 'translateX(-105%)',
         transition: 'transform 350ms ease-out',
         display: 'flex',

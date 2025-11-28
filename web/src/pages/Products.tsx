@@ -16,6 +16,13 @@ const HOLIDAYS: Record<HolidayType, { name: string; emoji: string; fontFamily: s
   halloween: { name: 'Halloween', emoji: '🎃', fontFamily: 'Inter' }
 }
 
+const CATEGORY_ICONS: Record<string, string> = {
+  shirts: '👕',
+  hoodies: '🧥',
+  pants: '👖',
+  accessories: '🧢'
+}
+
 function addToCart(prod: Product) {
   const items = JSON.parse(localStorage.getItem('cart') || '[]')
   const existing = items.find((it: any) => it.id === prod.id)

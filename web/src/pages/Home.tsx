@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { HeartIcon, ShoppingCartIcon, ShirtIcon, ClockIcon } from '../components/icons'
 
 function holidayMessage(date = new Date()) {
@@ -12,26 +13,69 @@ function holidayMessage(date = new Date()) {
 
 export function Home() {
   const name = 'Guest'
+  const [gridColumns, setGridColumns] = useState('repeat(2, 1fr)')
+
+  useEffect(() => {
+    const updateGrid = () => {
+      const width = window.innerWidth
+      if (width < 640) {
+        setGridColumns('1fr') // Mobile: 1 column
+      } else if (width < 1024) {
+        setGridColumns('repeat(2, 1fr)') // Tablet: 2 columns
+      } else {
+        setGridColumns('repeat(4, 1fr)') // Desktop: 4 columns
+      }
+    }
+
+    updateGrid()
+    window.addEventListener('resize', updateGrid)
+    return () => window.removeEventListener('resize', updateGrid)
+  }, [])
+
   return (
     <div style={{ padding: 24 }}>
       <div style={{ fontSize: 24, fontWeight: 700 }}>Welcome, {name}!</div>
       <div style={{ fontSize: 18 }}>{holidayMessage()}</div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, marginTop: 24 }}>
-        <Link to="/favorites" style={{ display: 'grid', placeItems: 'center', background: '#BE185D', borderRadius: 16, height: 140, textDecoration: 'none', color: '#FFFFFF' }}>
-          <HeartIcon size={64} filled />
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: gridColumns,
+        gap: 16,
+        marginTop: 24,
+        maxWidth: 1200,
+        marginLeft: 'auto',
+        marginRight: 'auto'
+      }}>
+        <Link
+          to="/favorites"
+          style={{ display: 'grid', placeItems: 'center', background: '#BE185D', borderRadius: 16, height: 140, textDecoration: 'none', color: '#FFFFFF' }}
+          aria-label="View your favorite products"
+        >
+          <HeartIcon size={64} filled aria-hidden="true" />
           <div style={{ fontSize: 16, fontWeight: 600 }}>My Favorites</div>
         </Link>
-        <Link to="/cart" style={{ display: 'grid', placeItems: 'center', background: '#065F46', borderRadius: 16, height: 140, textDecoration: 'none', color: '#fff' }}>
-          <ShoppingCartIcon size={64} />
+        <Link
+          to="/cart"
+          style={{ display: 'grid', placeItems: 'center', background: '#065F46', borderRadius: 16, height: 140, textDecoration: 'none', color: '#fff' }}
+          aria-label="View your shopping cart"
+        >
+          <ShoppingCartIcon size={64} aria-hidden="true" />
           <div style={{ fontSize: 16, fontWeight: 600 }}>Cart</div>
         </Link>
-        <Link to="/products" style={{ display: 'grid', placeItems: 'center', background: '#1E3A8A', borderRadius: 16, height: 140, textDecoration: 'none', color: '#fff' }}>
-          <ShirtIcon size={64} />
+        <Link
+          to="/products"
+          style={{ display: 'grid', placeItems: 'center', background: '#1E3A8A', borderRadius: 16, height: 140, textDecoration: 'none', color: '#fff' }}
+          aria-label="Browse all products"
+        >
+          <ShirtIcon size={64} aria-hidden="true" />
           <div style={{ fontSize: 16, fontWeight: 600 }}>Browse Products</div>
         </Link>
-        <Link to="/orders" style={{ display: 'grid', placeItems: 'center', background: '#DBEAFE', borderRadius: 16, height: 140, textDecoration: 'none', color: '#2D3748' }}>
-          <ClockIcon size={64} />
+        <Link
+          to="/orders"
+          style={{ display: 'grid', placeItems: 'center', background: '#DBEAFE', borderRadius: 16, height: 140, textDecoration: 'none', color: '#2D3748' }}
+          aria-label="View your order history"
+        >
+          <ClockIcon size={64} aria-hidden="true" />
           <div style={{ fontSize: 16, fontWeight: 600 }}>Orders</div>
         </Link>
       </div>

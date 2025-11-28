@@ -21,7 +21,9 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
     detectLocale().then(detected => {
       const saved = localStorage.getItem('locale') as SupportedLocale
       const final = saved || detected
-      setLocale(final)
+      setLocaleState(final)
+      setCurrency(LOCALES[final].currency)
+      localStorage.setItem('locale', final)
     })
   }, [])
 

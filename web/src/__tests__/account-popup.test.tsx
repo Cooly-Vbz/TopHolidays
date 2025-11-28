@@ -94,8 +94,29 @@ describe('AccountPopup', () => {
         )
 
         // Check for either Sign In or Account Settings to ensure it renders something
-        const signIn = screen.queryByText(/Sign In \/ Sign Up/i)
-        const settings = screen.queryByText(/Account Settings/i)
-        expect(signIn || settings).toBeInTheDocument()
+        it('should toggle Sign In view', () => {
+            const anchorRef = { current: document.createElement('button') }
+            renderWithProviders(
+                <AccountPopup
+                    isOpen={true}
+                    onClose={vi.fn()}
+                    anchorRef={anchorRef}
+                    onOpenSettings={vi.fn()}
+                />
+            )
+
+            // Initially shows Sign In / Sign Up button
+            const signInBtn = screen.getByText(/Sign In \/ Sign Up/i)
+            expect(signInBtn).toBeInTheDocument()
+
+            // Click to show OAuth buttons
+            fireEvent.click(signInBtn)
+            expect(screen.getByText(/Sign In/i)).toBeInTheDocument() // Header
+            expect(screen.queryByText(/Sign In \/ Sign Up/i)).not.toBeInTheDocument()
+
+            // Click back
+            const backBtn = screen.getByText('←')
+            fireEvent.click(backBtn)
+            expect(screen.getByText(/Sign In \/ Sign Up/i)).toBeInTheDocument()
+        })
     })
-})

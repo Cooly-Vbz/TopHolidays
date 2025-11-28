@@ -3,7 +3,6 @@ import { encryptionService } from './crypto'
 const USER_KEY = 'auth:user'
 const ACCOUNTS_KEY = 'auth:accounts'
 const SETTINGS_KEY = 'auth:settings'
-const SETTINGS_SECRET_KEY = 'auth:settings-secret'
 
 export type UserProfile = {
   id: string
@@ -48,7 +47,7 @@ async function hashPassword(email: string, password: string) {
 export type StoredUser = {
   email: string
   passwordHash: string
-  encryptedProfile: { encrypted: Uint8Array; iv: Uint8Array }
+  encryptedProfile: string // Encrypted JSON string
 }
 
 function loadStored(): StoredUser | null {
@@ -60,10 +59,7 @@ function loadStored(): StoredUser | null {
     return {
       email: parsed.email,
       passwordHash: parsed.passwordHash,
-      encryptedProfile: {
-        encrypted: new Uint8Array(parsed.encryptedProfile.encrypted),
-        iv: new Uint8Array(parsed.encryptedProfile.iv),
-      },
+      encryptedProfile: parsed.encryptedProfile, // Now a string
     }
   } catch {
     return null
@@ -78,10 +74,7 @@ function saveStored(user: StoredUser | null) {
   const serializable = {
     email: user.email,
     passwordHash: user.passwordHash,
-    encryptedProfile: {
-      encrypted: Array.from(user.encryptedProfile.encrypted),
-      iv: Array.from(user.encryptedProfile.iv),
-    },
+    encryptedProfile: user.encryptedProfile, // Now a string
   }
   localStorage.setItem(USER_KEY, JSON.stringify(serializable))
 }
@@ -95,10 +88,7 @@ function loadAccounts(): StoredUser[] {
     return parsed.map((acc: any) => ({
       email: acc.email,
       passwordHash: acc.passwordHash,
-      encryptedProfile: {
-        encrypted: new Uint8Array(acc.encryptedProfile.encrypted),
-        iv: new Uint8Array(acc.encryptedProfile.iv),
-      },
+      encryptedProfile: acc.encryptedProfile, // Now a string
     }))
   } catch {
     return []
@@ -109,10 +99,7 @@ function saveAccounts(accounts: StoredUser[]) {
   const serializable = accounts.map(acc => ({
     email: acc.email,
     passwordHash: acc.passwordHash,
-    encryptedProfile: {
-      encrypted: Array.from(acc.encryptedProfile.encrypted),
-      iv: Array.from(acc.encryptedProfile.iv),
-    },
+    encryptedProfile: acc.encryptedProfile, // Now a string
   }))
   localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(serializable))
 }
@@ -137,7 +124,7 @@ export async function signUp(email: string, password: string, displayName?: stri
     displayName,
     createdAt: new Date().toISOString(),
   }
-  const encryptedProfile = await encryptionService.encryptUserData(profile, passwordHash)
+  const encryptedProfile = encryptionService.encryptUserData(profile)
   saveStored({ email, passwordHash, encryptedProfile })
   upsertAccount({ email, passwordHash, encryptedProfile })
   return profile
@@ -152,7 +139,7 @@ export async function signIn(email: string, password: string): Promise<UserProfi
   if (passwordHash !== stored.passwordHash) {
     throw new Error('Incorrect password.')
   }
-  const profile = await encryptionService.decryptUserData(stored.encryptedProfile, passwordHash) as UserProfile
+  const profile = encryptionService.decryptUserData<UserProfile>(stored.encryptedProfile)
   localStorage.setItem('auth:current', JSON.stringify({ email }))
   upsertAccount({ email, passwordHash, encryptedProfile: stored.encryptedProfile })
   return profile
@@ -169,7 +156,7 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
     const { email } = JSON.parse(raw)
     const stored = loadStored()
     if (!stored || stored.email !== email) return null
-    const profile = await encryptionService.decryptUserData(stored.encryptedProfile, stored.passwordHash) as UserProfile
+    const profile = encryptionService.decryptUserData<UserProfile>(stored.encryptedProfile)
     return profile
   } catch {
     return null
@@ -191,7 +178,7 @@ export async function signInWithOAuth(provider: 'google' | 'facebook' | 'apple' 
   // Check if user already exists
   const existing = loadStored()
   if (existing && existing.email === mockData.email) {
-    const profile = await encryptionService.decryptUserData(existing.encryptedProfile, existing.passwordHash) as UserProfile
+    const profile = encryptionService.decryptUserData<UserProfile>(existing.encryptedProfile)
     localStorage.setItem('auth:current', JSON.stringify({ email: mockData.email }))
     return profile
   }
@@ -208,7 +195,7 @@ export async function signInWithOAuth(provider: 'google' | 'facebook' | 'apple' 
   
   // Generate a secure password hash for OAuth users
   const passwordHash = await hashPassword(mockData.email, `oauth_${provider}_${mockData.providerId}`)
-  const encryptedProfile = await encryptionService.encryptUserData(profile, passwordHash)
+  const encryptedProfile = encryptionService.encryptUserData(profile)
   saveStored({ email: mockData.email, passwordHash, encryptedProfile })
   upsertAccount({ email: mockData.email, passwordHash, encryptedProfile })
   localStorage.setItem('auth:current', JSON.stringify({ email: mockData.email }))
@@ -221,15 +208,20 @@ export async function signUpWithOAuth(provider: 'google' | 'facebook' | 'apple' 
 export async function updateProfile(next: Partial<UserProfile>, password?: string): Promise<UserProfile> {
   const stored = loadStored()
   if (!stored) throw new Error('No local account stored.')
-  const passwordHash = password ? await hashPassword(stored.email, password) : stored.passwordHash
-  if (passwordHash !== stored.passwordHash) {
-    throw new Error('Incorrect password.')
+
+  // If password is provided, verify it before allowing the update
+  if (password) {
+    const providedHash = await hashPassword(stored.email, password)
+    if (providedHash !== stored.passwordHash) {
+      throw new Error('Incorrect password.')
+    }
   }
-  const current = await encryptionService.decryptUserData(stored.encryptedProfile, stored.passwordHash) as UserProfile
+
+  const current = encryptionService.decryptUserData<UserProfile>(stored.encryptedProfile)
   const updated: UserProfile = { ...current, ...next }
-  const encryptedProfile = await encryptionService.encryptUserData(updated, passwordHash)
-  saveStored({ email: stored.email, passwordHash, encryptedProfile })
-  upsertAccount({ email: stored.email, passwordHash, encryptedProfile })
+  const encryptedProfile = encryptionService.encryptUserData(updated)
+  saveStored({ email: stored.email, passwordHash: stored.passwordHash, encryptedProfile })
+  upsertAccount({ email: stored.email, passwordHash: stored.passwordHash, encryptedProfile })
   localStorage.setItem('auth:current', JSON.stringify({ email: stored.email }))
   return updated
 }
@@ -239,7 +231,7 @@ export async function listAccounts(): Promise<Array<{ email: string; displayName
   const result: Array<{ email: string; displayName?: string }> = []
   for (const acc of accounts) {
     try {
-      const profile = await encryptionService.decryptUserData(acc.encryptedProfile, acc.passwordHash) as UserProfile
+      const profile = encryptionService.decryptUserData<UserProfile>(acc.encryptedProfile)
       result.push({ email: acc.email, displayName: profile.displayName })
     } catch {
       result.push({ email: acc.email })
@@ -267,13 +259,8 @@ export function loadSettings(): AccountSettings {
     const raw = localStorage.getItem(SETTINGS_KEY)
     if (!raw) return defaultSettings
     const parsed = JSON.parse(raw)
-    if (parsed && parsed.encrypted && parsed.iv && parsed.secretVersion === 1) {
-      const secret = getOrCreateSettingsSecret()
-      const payload = {
-        encrypted: new Uint8Array(parsed.encrypted),
-        iv: new Uint8Array(parsed.iv),
-      }
-      return encryptionService.decryptUserData(payload, secret) as unknown as AccountSettings
+    if (parsed && parsed.encryptedProfile && parsed.secretVersion === 1) {
+      return encryptionService.decryptUserData<AccountSettings>(parsed.encryptedProfile)
     }
     return { ...defaultSettings, ...parsed }
   } catch {
@@ -283,30 +270,14 @@ export function loadSettings(): AccountSettings {
 
 export function saveSettings(next: AccountSettings) {
   try {
-    const secret = getOrCreateSettingsSecret()
-    const payloadPromise = encryptionService.encryptUserData(next, secret)
-    Promise.resolve(payloadPromise).then(payload => {
-      const serializable = {
-        encrypted: Array.from(payload.encrypted),
-        iv: Array.from(payload.iv),
-        secretVersion: 1,
-      }
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(serializable))
-    }).catch(() => {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(next))
-    })
+    const payload = encryptionService.encryptUserData(next)
+    const serializable = {
+      encryptedProfile: payload,
+      secretVersion: 1,
+    }
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(serializable))
   } catch {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(next))
   }
 }
 
-function getOrCreateSettingsSecret(): string {
-  let secret = localStorage.getItem(SETTINGS_SECRET_KEY)
-  if (!secret) {
-    const bytes = new Uint8Array(32)
-    crypto.getRandomValues(bytes)
-    secret = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')
-    localStorage.setItem(SETTINGS_SECRET_KEY, secret)
-  }
-  return secret
-}

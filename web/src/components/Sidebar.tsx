@@ -39,13 +39,13 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
           flexShrink: 0
         }}>
           <h1 style={{
-            fontFamily: '"Orbitron", "Rajdhani", "Arial Black", sans-serif',
-            fontSize: 'clamp(18px, 5vw, 24px)',
-            fontWeight: 700,
+            fontFamily: '"Cinzel", "Georgia", serif',
+            fontSize: 'clamp(16px, 4.5vw, 20px)',
+            fontWeight: 600,
             margin: 0,
             color: isDark ? '#60A5FA' : '#3B82F6',
-            letterSpacing: '1.5px',
-            textShadow: isDark ? '0 0 10px rgba(96, 165, 250, 0.5)' : '0 0 6px rgba(59, 130, 246, 0.3)',
+            letterSpacing: '3px',
+            textShadow: isDark ? '0 0 8px rgba(96, 165, 250, 0.4)' : '0 0 4px rgba(59, 130, 246, 0.2)',
             lineHeight: 1,
             whiteSpace: 'nowrap',
             textTransform: 'uppercase'

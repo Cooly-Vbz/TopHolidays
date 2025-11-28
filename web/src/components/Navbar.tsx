@@ -70,7 +70,7 @@ export default function Navbar({ onMenu, onAccount }: { onMenu: () => void, onAc
         background: 'none', border: 'none', cursor: 'pointer'
       }} aria-label="Go Home">
         <span style={{ position: 'relative', display: 'inline-block' }}>
-          <span style={{ fontFamily: '"Pacifico", cursive', fontSize: 24, color: textColor }}>Top Holidays</span>
+          <span style={{ fontFamily: '"Caveat", cursive', fontSize: 28, fontWeight: 700, color: textColor, letterSpacing: '0.5px' }}>Top Holidays</span>
           {/* Decorations */}
           {seasonalTheme === 'christmas' && (
             <span aria-hidden style={{ position: 'absolute', left: -24, top: -12, color: '#14B8A6' }}>❄️</span>

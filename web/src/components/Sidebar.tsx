@@ -13,8 +13,8 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
   return (
     <>
       <div aria-hidden={!open} onClick={onClose} style={{
-        position: 'fixed', inset: 0, background: open ? 'rgba(0,0,0,0.8)' : 'transparent',
-        backdropFilter: open ? 'blur(2px)' : 'none',
+        position: 'fixed', inset: 0, background: open ? 'rgba(0,0,0,0.9)' : 'transparent',
+        backdropFilter: open ? 'blur(3px)' : 'none',
         transition: 'background 350ms', zIndex: 999, pointerEvents: open ? 'auto' : 'none'
       }} />
 

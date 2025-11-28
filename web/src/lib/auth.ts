@@ -1,4 +1,4 @@
-import { encryptData, decryptData } from './crypto'
+import { encryptionService } from './crypto'
 
 const USER_KEY = 'auth:user'
 const SETTINGS_KEY = 'auth:settings'
@@ -10,6 +10,8 @@ export type UserProfile = {
   displayName?: string
   avatarUrl?: string
   createdAt: string
+  provider?: 'local' | 'google' | 'facebook' | 'apple' | 'github'
+  providerId?: string
 }
 
 export type AuthState = {
@@ -95,7 +97,7 @@ export async function signUp(email: string, password: string, displayName?: stri
     displayName,
     createdAt: new Date().toISOString(),
   }
-  const encryptedProfile = await encryptData(profile, passwordHash)
+  const encryptedProfile = await encryptionService.encryptUserData(profile, passwordHash)
   saveStored({ email, passwordHash, encryptedProfile })
   return profile
 }
@@ -109,7 +111,7 @@ export async function signIn(email: string, password: string): Promise<UserProfi
   if (passwordHash !== stored.passwordHash) {
     throw new Error('Incorrect password.')
   }
-  const profile = await decryptData(stored.encryptedProfile, passwordHash) as UserProfile
+  const profile = await encryptionService.decryptUserData(stored.encryptedProfile, passwordHash) as UserProfile
   localStorage.setItem('auth:current', JSON.stringify({ email }))
   return profile
 }
@@ -125,14 +127,54 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
     const { email } = JSON.parse(raw)
     const stored = loadStored()
     if (!stored || stored.email !== email) return null
-    const profile = await decryptData(stored.encryptedProfile, stored.passwordHash) as UserProfile
+    const profile = await encryptionService.decryptUserData(stored.encryptedProfile, stored.passwordHash) as UserProfile
     return profile
   } catch {
     return null
   }
 }
 
-export async function updateProfile(next: Partial<UserProfile>, password?: string): Promise<UserProfile> {
+export async function signInWithOAuth(provider: 'google' | 'facebook' | 'apple' | 'github'): Promise<UserProfile> {
+  // Mock OAuth implementation for demo purposes
+  const mockProfiles = {
+    google: { email: 'user@gmail.com', displayName: 'Google User', providerId: 'google_123' },
+    facebook: { email: 'user@facebook.com', displayName: 'Facebook User', providerId: 'facebook_123' },
+    apple: { email: 'user@apple.com', displayName: 'Apple User', providerId: 'apple_123' },
+    github: { email: 'user@github.com', displayName: 'GitHub User', providerId: 'github_123' },
+  }
+  
+  const mockData = mockProfiles[provider]
+  if (!mockData) throw new Error(`OAuth provider ${provider} not supported`)
+  
+  // Check if user already exists
+  const existing = loadStored()
+  if (existing && existing.email === mockData.email) {
+    const profile = await encryptionService.decryptUserData(existing.encryptedProfile, existing.passwordHash) as UserProfile
+    localStorage.setItem('auth:current', JSON.stringify({ email: mockData.email }))
+    return profile
+  }
+  
+  // Create new OAuth user
+  const profile: UserProfile = {
+    id: crypto.randomUUID(),
+    email: mockData.email,
+    displayName: mockData.displayName,
+    provider,
+    providerId: mockData.providerId,
+    createdAt: new Date().toISOString(),
+  }
+  
+  // Generate a secure password hash for OAuth users
+  const passwordHash = await hashPassword(mockData.email, `oauth_${provider}_${mockData.providerId}`)
+  const encryptedProfile = await encryptionService.encryptUserData(profile, passwordHash)
+  saveStored({ email: mockData.email, passwordHash, encryptedProfile })
+  localStorage.setItem('auth:current', JSON.stringify({ email: mockData.email }))
+  return profile
+}
+
+export async function signUpWithOAuth(provider: 'google' | 'facebook' | 'apple' | 'github'): Promise<UserProfile> {
+  return signInWithOAuth(provider) // Same implementation for sign up
+}
   const stored = loadStored()
   if (!stored) throw new Error('No local account stored.')
   const passwordHash = password
@@ -141,9 +183,9 @@ export async function updateProfile(next: Partial<UserProfile>, password?: strin
   if (passwordHash !== stored.passwordHash) {
     throw new Error('Incorrect password.')
   }
-  const current = await decryptData(stored.encryptedProfile, stored.passwordHash) as UserProfile
+  const current = await encryptionService.decryptUserData(stored.encryptedProfile, stored.passwordHash) as UserProfile
   const updated: UserProfile = { ...current, ...next }
-  const encryptedProfile = await encryptData(updated, passwordHash)
+  const encryptedProfile = await encryptionService.encryptUserData(updated, passwordHash)
   saveStored({ email: stored.email, passwordHash, encryptedProfile })
   localStorage.setItem('auth:current', JSON.stringify({ email: stored.email }))
   return updated
@@ -160,7 +202,7 @@ export function loadSettings(): AccountSettings {
         encrypted: new Uint8Array(parsed.encrypted),
         iv: new Uint8Array(parsed.iv),
       }
-      return decryptData(payload, secret) as unknown as AccountSettings
+      return encryptionService.decryptUserData(payload, secret) as unknown as AccountSettings
     }
     return { ...defaultSettings, ...parsed }
   } catch {
@@ -171,7 +213,7 @@ export function loadSettings(): AccountSettings {
 export function saveSettings(next: AccountSettings) {
   try {
     const secret = getOrCreateSettingsSecret()
-    const payloadPromise = encryptData(next, secret)
+    const payloadPromise = encryptionService.encryptUserData(next, secret)
     Promise.resolve(payloadPromise).then(payload => {
       const serializable = {
         encrypted: Array.from(payload.encrypted),

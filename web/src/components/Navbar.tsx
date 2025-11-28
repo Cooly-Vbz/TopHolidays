@@ -1,7 +1,8 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useTheme } from './ThemeProvider'
 import { useAuth } from './AuthProvider'
+import AccountPopup from './AccountPopup'
 
 function useCartCount() {
   const [count, setCount] = useState(0)
@@ -43,7 +44,14 @@ export default function Navbar({ onMenu, onAccount }: { onMenu: () => void, onAc
   const location = useLocation()
   const { user } = useAuth()
   const { theme: appTheme } = useTheme()
+  const [showAccountPopup, setShowAccountPopup] = useState(false)
+  const [currentLocale, setCurrentLocale] = useState('en-US')
+  const accountButtonRef = useRef<HTMLButtonElement>(null)
   const onCart = () => navigate('/cart')
+
+  const handleLocaleChange = (locale: any) => {
+    setCurrentLocale(locale.code);
+  };
 
   const onHome = () => navigate('/')
   const isCartRoute = location.pathname.startsWith('/cart')
@@ -99,7 +107,13 @@ export default function Navbar({ onMenu, onAccount }: { onMenu: () => void, onAc
             </span>
           )}
         </button>
-        <button onClick={onAccount} aria-label="Account" style={{ position: 'relative', minWidth: 40, height: 40, borderRadius: 20, border: 'none', background: buttonBg, color: buttonColor, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, lineHeight: 1, padding: '0 10px', gap: 8 }}>
+        <button
+          ref={accountButtonRef}
+          onClick={() => setShowAccountPopup(!showAccountPopup)}
+          aria-label="Account"
+          aria-expanded={showAccountPopup}
+          style={{ position: 'relative', minWidth: 40, height: 40, borderRadius: 20, border: 'none', background: buttonBg, color: buttonColor, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, lineHeight: 1, padding: '0 10px', gap: 8 }}
+        >
           <span>👤</span>
           {user && (
             <span style={{ fontSize: 13, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: isDark ? '#9CA3AF' : '#4B5563' }}>
@@ -111,6 +125,15 @@ export default function Navbar({ onMenu, onAccount }: { onMenu: () => void, onAc
           )}
         </button>
       </div>
+
+      <AccountPopup
+        isOpen={showAccountPopup}
+        onClose={() => setShowAccountPopup(false)}
+        anchorRef={accountButtonRef}
+        onOpenSettings={onAccount}
+        currentLocale={currentLocale}
+        onLocaleChange={handleLocaleChange}
+      />
     </nav>
   )
 }

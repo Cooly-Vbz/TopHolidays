@@ -29,7 +29,7 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
         flexDirection: 'column',
         overflow: 'hidden'
       }}>
-        {/* Title Header - Fixed height to match navbar */}
+        {/* Title Header - Match Navbar brand styling */}
         <div style={{
           height: 64,
           display: 'flex',
@@ -39,18 +39,16 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
           flexShrink: 0
         }}>
           <h1 style={{
-            fontFamily: '"Cinzel", "Georgia", serif',
-            fontSize: 'clamp(16px, 4.5vw, 20px)',
-            fontWeight: 600,
+            fontFamily: '"Caveat", cursive',
+            fontSize: 28,
+            fontWeight: 700,
             margin: 0,
-            color: isDark ? '#60A5FA' : '#3B82F6',
-            letterSpacing: '3px',
-            textShadow: isDark ? '0 0 8px rgba(96, 165, 250, 0.4)' : '0 0 4px rgba(59, 130, 246, 0.2)',
+            color: textColor,
+            letterSpacing: '0.5px',
             lineHeight: 1,
-            whiteSpace: 'nowrap',
-            textTransform: 'uppercase'
+            whiteSpace: 'nowrap'
           }}>
-            TOP HOLIDAYS
+            Top Holidays
           </h1>
         </div>
 

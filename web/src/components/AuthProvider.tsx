@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { UserProfile, AccountSettings } from '../lib/auth'
-import { getCurrentUser, signIn as rawSignIn, signUp as rawSignUp, signInWithOAuth as rawSignInWithOAuth, signUpWithOAuth as rawSignUpWithOAuth, signOut as rawSignOut, updateProfile as rawUpdateProfile, loadSettings, saveSettings } from '../lib/auth'
+import { getCurrentUser, signIn as rawSignIn, signUp as rawSignUp, signInWithOAuth as rawSignInWithOAuth, signUpWithOAuth as rawSignUpWithOAuth, signOut as rawSignOut, updateProfile as rawUpdateProfile, loadSettings, saveSettings, switchAccount as rawSwitchAccount } from '../lib/auth'
 
 export type OAuthProvider = 'google' | 'facebook' | 'apple' | 'github'
 
@@ -16,6 +16,7 @@ export type AuthContextValue = {
   signOut: () => void
   updateProfile: (next: Partial<UserProfile>, password?: string) => Promise<void>
   updateSettings: (updater: (prev: AccountSettings) => AccountSettings) => void
+  switchToAccount: (email: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -73,6 +74,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
   }
 
+  const switchToAccount = async (email: string) => {
+    rawSwitchAccount(email)
+    const u = await getCurrentUser()
+    setUser(u)
+  }
+
   const value: AuthContextValue = {
     user,
     loading,
@@ -84,6 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOut,
     updateProfile,
     updateSettings,
+    switchToAccount,
   }
 
   return (

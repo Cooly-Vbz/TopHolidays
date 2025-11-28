@@ -26,7 +26,7 @@ export default function AccountPopup({
     onLocaleChange
 }: AccountPopupProps) {
     const { theme } = useTheme()
-    const { user, signOut, signInWithOAuth, signUpWithOAuth } = useAuth()
+    const { user, signOut, signInWithOAuth, signUpWithOAuth, switchToAccount } = useAuth()
     const navigate = useNavigate()
     const colors = getThemeColors(theme)
     const popupRef = useRef<HTMLDivElement>(null)
@@ -256,7 +256,7 @@ export default function AccountPopup({
                   <div style={{ marginBottom: 8 }}>
                     {accounts.map(acc => (
                       <button key={acc.email}
-                        onClick={() => { try { switchAccount(acc.email); onClose(); window.location.reload(); } catch (e) { alert((e as Error).message) } }}
+                        onClick={() => { try { switchToAccount(acc.email); onClose(); } catch (e) { alert((e as Error).message) } }}
                         style={{ width: '100%', padding: 10, background: 'transparent', border: `1px solid ${colors.border.default}`, borderRadius: 8, color: colors.text.primary, textAlign: 'left', cursor: 'pointer', marginBottom: 6 }}
                       >
                         <span style={{ fontWeight: 600 }}>{acc.displayName || acc.email}</span>

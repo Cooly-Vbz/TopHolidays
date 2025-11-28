@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import '@testing-library/jest-dom'
 import { render, screen, waitFor, fireEvent } from './test-utils'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
+import { ThemeProvider } from '../components/ThemeProvider'
 import ProductDetails from '../pages/ProductDetails'
 
 const mockProducts = [
@@ -13,9 +14,13 @@ const mockProducts = [
 const renderWithRouter = (initialEntries: string[]) => {
   return render(
     <MemoryRouter initialEntries={initialEntries}>
-      <Routes>
-        <Route path="/products/:id" element={<ProductDetails />} />
-      </Routes>
+      <AuthProvider>
+        <ThemeProvider>
+          <Routes>
+            <Route path="/products/:id" element={<ProductDetails />} />
+          </Routes>
+        </ThemeProvider>
+      </AuthProvider>
     </MemoryRouter>
   )
 }

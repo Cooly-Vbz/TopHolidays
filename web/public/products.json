@@ -1,6 +1,6 @@
 [
   {
-    "id": 1,
+    "id": "1",
     "name": "Christmas Shirt",
     "category": "shirts",
     "holiday": "christmas",
@@ -9,7 +9,7 @@
     "image": "/images/christmas.svg"
   },
   {
-    "id": 2,
+    "id": "2",
     "name": "Christmas Hoodie",
     "category": "hoodies",
     "holiday": "christmas",
@@ -18,7 +18,7 @@
     "image": "/images/christmas.svg"
   },
   {
-    "id": 3,
+    "id": "3",
     "name": "Christmas Pants",
     "category": "pants",
     "holiday": "christmas",
@@ -27,7 +27,7 @@
     "image": "/images/christmas.svg"
   },
   {
-    "id": 4,
+    "id": "4",
     "name": "New Years Shirt",
     "category": "shirts",
     "holiday": "new_years",
@@ -36,7 +36,7 @@
     "image": "/images/new_years.svg"
   },
   {
-    "id": 5,
+    "id": "5",
     "name": "New Years Hoodie",
     "category": "hoodies",
     "holiday": "new_years",
@@ -45,7 +45,7 @@
     "image": "/images/new_years.svg"
   },
   {
-    "id": 6,
+    "id": "6",
     "name": "New Years Pants",
     "category": "pants",
     "holiday": "new_years",
@@ -54,7 +54,7 @@
     "image": "/images/new_years.svg"
   },
   {
-    "id": 7,
+    "id": "7",
     "name": "Valentines Shirt",
     "category": "shirts",
     "holiday": "valentines",
@@ -63,7 +63,7 @@
     "image": "/images/valentines.svg"
   },
   {
-    "id": 8,
+    "id": "8",
     "name": "Valentines Hoodie",
     "category": "hoodies",
     "holiday": "valentines",
@@ -72,7 +72,7 @@
     "image": "/images/valentines.svg"
   },
   {
-    "id": 9,
+    "id": "9",
     "name": "Valentines Pants",
     "category": "pants",
     "holiday": "valentines",
@@ -81,7 +81,7 @@
     "image": "/images/valentines.svg"
   },
   {
-    "id": 10,
+    "id": "10",
     "name": "Easter Shirt",
     "category": "shirts",
     "holiday": "easter",
@@ -90,7 +90,7 @@
     "image": "/images/easter.svg"
   },
   {
-    "id": 11,
+    "id": "11",
     "name": "Easter Hoodie",
     "category": "hoodies",
     "holiday": "easter",
@@ -99,7 +99,7 @@
     "image": "/images/easter.svg"
   },
   {
-    "id": 12,
+    "id": "12",
     "name": "Easter Pants",
     "category": "pants",
     "holiday": "easter",

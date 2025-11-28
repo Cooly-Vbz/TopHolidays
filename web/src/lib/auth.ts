@@ -163,47 +163,36 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
   }
 }
 
-export async function signInWithOAuth(provider: 'google' | 'facebook' | 'apple' | 'github'): Promise<UserProfile> {
-  // Mock OAuth implementation for demo purposes
-  const mockProfiles = {
-    google: { email: 'user@gmail.com', displayName: 'Google User', providerId: 'google_123' },
-    facebook: { email: 'user@facebook.com', displayName: 'Facebook User', providerId: 'facebook_123' },
-    apple: { email: 'user@apple.com', displayName: 'Apple User', providerId: 'apple_123' },
-    github: { email: 'user@github.com', displayName: 'GitHub User', providerId: 'github_123' },
+export async function signInWithOAuth(provider: 'google' | 'facebook' | 'apple' | 'github', profileData?: UserProfile): Promise<UserProfile> {
+  // Use provided profile data or create mock data for demo
+  const profile: UserProfile = profileData || {
+    id: crypto.randomUUID(),
+    email: `${provider}_user@example.com`,
+    displayName: `${provider.charAt(0).toUpperCase() + provider.slice(1)} User`,
+    provider: provider,
+    providerId: `${provider}_${Date.now()}`,
+    createdAt: new Date().toISOString()
   }
-  
-  const mockData = mockProfiles[provider]
-  if (!mockData) throw new Error(`OAuth provider ${provider} not supported`)
-  
+
   // Check if user already exists
   const existing = loadStored()
-  if (existing && existing.email === mockData.email) {
-    const profile = encryptionService.decryptUserData<UserProfile>(existing.encryptedProfile)
-    localStorage.setItem('auth:current', JSON.stringify({ email: mockData.email }))
-    return profile
+  if (existing && existing.email === profile.email) {
+    const storedProfile = encryptionService.decryptUserData<UserProfile>(existing.encryptedProfile)
+    localStorage.setItem('auth:current', JSON.stringify({ email: profile.email }))
+    return storedProfile
   }
-  
-  // Create new OAuth user
-  const profile: UserProfile = {
-    id: crypto.randomUUID(),
-    email: mockData.email,
-    displayName: mockData.displayName,
-    provider,
-    providerId: mockData.providerId,
-    createdAt: new Date().toISOString(),
-  }
-  
+
   // Generate a secure password hash for OAuth users
-  const passwordHash = await hashPassword(mockData.email, `oauth_${provider}_${mockData.providerId}`)
+  const passwordHash = await hashPassword(profile.email, `oauth_${provider}_${profile.providerId}`)
   const encryptedProfile = encryptionService.encryptUserData(profile)
-  saveStored({ email: mockData.email, passwordHash, encryptedProfile })
-  upsertAccount({ email: mockData.email, passwordHash, encryptedProfile })
-  localStorage.setItem('auth:current', JSON.stringify({ email: mockData.email }))
+  saveStored({ email: profile.email, passwordHash, encryptedProfile })
+  upsertAccount({ email: profile.email, passwordHash, encryptedProfile })
+  localStorage.setItem('auth:current', JSON.stringify({ email: profile.email }))
   return profile
 }
 
-export async function signUpWithOAuth(provider: 'google' | 'facebook' | 'apple' | 'github'): Promise<UserProfile> {
-  return signInWithOAuth(provider) // Same implementation for sign up
+export async function signUpWithOAuth(provider: 'google' | 'facebook' | 'apple' | 'github', profileData?: UserProfile): Promise<UserProfile> {
+  return signInWithOAuth(provider, profileData) // Same implementation for sign up
 }
 export async function updateProfile(next: Partial<UserProfile>, password?: string): Promise<UserProfile> {
   const stored = loadStored()

@@ -24,6 +24,14 @@ export default function AccountOverlay({ open, onClose }: { open: boolean; onClo
   const inputBg = isDark ? '#0F172A' : '#FFFFFF'
   const inputBorder = isDark ? '#374151' : '#D1D5DB'
 
+  const requestClose = () => {
+    setClosing(true)
+    setTimeout(() => {
+      setClosing(false)
+      onClose()
+    }, 250)
+  }
+
   // Keyboard navigation support
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -40,14 +48,6 @@ export default function AccountOverlay({ open, onClose }: { open: boolean; onClo
 
   // Keep mounted during closing animation
   if (!open && !closing) return null
-
-  const requestClose = () => {
-    setClosing(true)
-    setTimeout(() => {
-      setClosing(false)
-      onClose()
-    }, 250)
-  }
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

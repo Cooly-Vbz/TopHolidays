@@ -90,7 +90,7 @@ export const checkRateLimit = (identifier: string, maxAttempts = 5, windowMs = 1
 
 // Session timeout management
 const SESSION_TIMEOUT = 30 * 60 * 1000 // 30 minutes
-let sessionTimer: NodeJS.Timeout | null = null
+let sessionTimer: number | null = null
 
 export const resetSessionTimer = (onTimeout?: () => void) => {
   if (sessionTimer) {

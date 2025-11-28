@@ -39,10 +39,94 @@ export async function handleOAuthCallback(
 ): Promise<UserProfile> {
     console.log(`Handling ${provider} callback:`, response)
 
+    // Validate OAuth response
+    if (!response) {
+        throw new Error('OAuth response is empty')
+    }
+
+    let userData: Partial<UserProfile> = {}
+
+    // Extract user data based on provider
+    switch (provider) {
+        case 'google':
+            if (response.credential) {
+                // Google JWT token - in a real app, you'd decode this
+                // For demo, we'll create mock data from the credential presence
+                userData = {
+                    email: `google_${Date.now()}@example.com`,
+                    displayName: 'Google User',
+                    provider: 'google',
+                    providerId: `google_${Date.now()}`
+                }
+            } else {
+                throw new Error('Invalid Google OAuth response')
+            }
+            break
+
+        case 'facebook':
+            if (response.email) {
+                userData = {
+                    email: response.email,
+                    displayName: response.name || 'Facebook User',
+                    provider: 'facebook',
+                    providerId: response.id
+                }
+            } else {
+                throw new Error('Invalid Facebook OAuth response')
+            }
+            break
+
+        case 'apple':
+            // Apple provides user data in a different format
+            if (response.authorization?.id_token) {
+                userData = {
+                    email: `apple_${Date.now()}@example.com`,
+                    displayName: 'Apple User',
+                    provider: 'apple',
+                    providerId: `apple_${Date.now()}`
+                }
+            } else {
+                throw new Error('Invalid Apple OAuth response')
+            }
+            break
+
+        case 'github':
+            if (response.code) {
+                // GitHub OAuth requires exchanging code for token
+                // For demo purposes, simulate this
+                userData = {
+                    email: `github_${Date.now()}@example.com`,
+                    displayName: 'GitHub User',
+                    provider: 'github',
+                    providerId: `github_${Date.now()}`
+                }
+            } else {
+                throw new Error('Invalid GitHub OAuth response')
+            }
+            break
+
+        default:
+            throw new Error(`Unsupported OAuth provider: ${provider}`)
+    }
+
+    // Validate required fields
+    if (!userData.email) {
+        throw new Error('Email is required from OAuth provider')
+    }
+
+    // Create complete user profile
+    const profile: UserProfile = {
+        id: crypto.randomUUID(),
+        email: userData.email,
+        displayName: userData.displayName || userData.email.split('@')[0],
+        provider: provider,
+        providerId: userData.providerId,
+        createdAt: new Date().toISOString()
+    }
+
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 800))
 
     // Use the auth service to sign in/up and persist the session
-    // We cast the provider string to the specific union type expected by auth.ts
-    return signInWithOAuth(provider as 'google' | 'facebook' | 'apple' | 'github')
+    return signInWithOAuth(provider as 'google' | 'facebook' | 'apple' | 'github', profile)
 }

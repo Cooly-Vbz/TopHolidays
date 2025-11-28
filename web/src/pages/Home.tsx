@@ -48,10 +48,10 @@ export function Home() {
       }}>
         <Link
           to="/favorites"
-          style={{ display: 'grid', placeItems: 'center', background: '#BE185D', borderRadius: 16, height: 140, textDecoration: 'none', color: '#FFFFFF' }}
+          style={{ display: 'grid', placeItems: 'center', background: '#C2185B', borderRadius: 16, height: 140, textDecoration: 'none', color: '#FFFFFF' }}
           aria-label="View your favorite products"
         >
-          <HeartIcon size={64} filled aria-hidden="true" />
+          <HeartIcon size={96} filled aria-hidden="true" />
           <div style={{ fontSize: 16, fontWeight: 600 }}>My Favorites</div>
         </Link>
         <Link

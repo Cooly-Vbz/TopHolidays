@@ -58,7 +58,7 @@ export default function Navbar({ onMenu, onAccount }: { onMenu: () => void, onAc
   return (
     <nav style={{
       position: 'fixed', top: 0, left: 0, right: 0, height: 64,
-      background: bgColor, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 8px rgba(0,0,0,0.06)', zIndex: 1000,
+      background: bgColor, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 8px rgba(0,0,0,0.06)', zIndex: 999,
       display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 12px',
       transition: 'background-color 0.3s, color 0.3s'
     }}>

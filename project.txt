@@ -1,0 +1,1253 @@
+# Top Holidays - Complete PWA E-commerce Application
+
+## PROJECT OVERVIEW
+Build a Progressive Web App (PWA) e-commerce store called "Top Holidays" that sells holiday-themed clothing products via Print-On-Demand integration with Shopify. The app must be installable on all devices, highly secure, privacy-focused, and feature a complete guest/authenticated user experience with a digital coins reward system.
+
+---
+
+## CRITICAL TECHNICAL REQUIREMENTS
+
+### PWA Configuration
+**IMPORTANT: Follow these exact steps for PWA setup**
+
+1. **Manifest.json Configuration:**
+   - Generate complete manifest.json at root level
+   - Required icons: 192x192, 512x512, 144x144, 96x96, 72x72, 48x48 (PNG format)
+   - Set `"display": "standalone"` for full-screen experience
+   - Set `"start_url": "/"` to specify entry point
+   - Set `"theme_color"` and `"background_color"` matching brand
+   - Add `"orientation": "any"` for flexible device support
+   - Include `"scope": "/"` to define service worker scope
+
+2. **Service Worker Implementation:**
+   - Register service worker at root level (not in subdirectory)
+   - Implement install event: cache critical assets during installation
+   - Implement activate event: clean up old caches
+   - Implement fetch event: intercept requests for offline support
+   - Use versioned cache names (e.g., 'top-holidays-v1')
+   - Cache strategy: Network-first for API calls, Cache-first for static assets
+   - CRITICAL: Register service worker AFTER page load to avoid blocking:
+   ```javascript
+   if ('serviceWorker' in navigator) {
+     window.addEventListener('load', () => {
+       navigator.serviceWorker.register('/sw.js')
+         .then(registration => console.log('SW registered'))
+         .catch(err => console.log('SW registration failed'));
+     });
+   }
+   ```
+
+3. **iOS PWA Support:**
+   - Add apple-touch-icon links in HTML head (180x180 minimum)
+   - Add `<meta name="apple-mobile-web-app-capable" content="yes">`
+   - Add `<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">`
+   - Add `<meta name="apple-mobile-web-app-title" content="Top Holidays">`
+
+4. **Offline Functionality:**
+   - Cache all HTML, CSS, JS files during service worker install
+   - Cache product images progressively as user browses
+   - Display custom offline page if network unavailable
+   - Queue failed API requests for retry when online
+   - Show connection status indicator to user
+
+### Performance & Architecture
+- Build as a Single Page Application (SPA) with client-side routing
+- Implement code splitting and lazy loading for optimal performance
+- Minimize server requests by caching product data locally
+- Use React Query or similar for efficient data fetching and caching
+- Optimize all images with lazy loading and WebP format where possible
+
+### Security & Encryption Implementation
+**⚠️ CRITICAL SECURITY WARNING: This section addresses CVE-2025-48757 vulnerability**
+
+Lovable apps using Supabase are vulnerable to data exposure if Row Level Security (RLS) policies are missing or insufficient. The Security View in Lovable displays findings from database security advisors and AI-powered reviews of RLS policies, but you MUST manually verify security.
+
+**MANDATORY SECURITY STEPS - DO NOT SKIP:**
+
+1. **Row Level Security (RLS) - HIGHEST PRIORITY:**
+   Enable RLS on ALL tables immediately using: `ALTER TABLE schema_name.table_name ENABLE ROW LEVEL SECURITY;`
+   
+   **Required RLS Policies for Each Table:**
+   ```sql
+   -- Users table: users can only access their own data
+   CREATE POLICY "Users can view own data" ON users
+     FOR SELECT USING (auth.uid() = id);
+   
+   CREATE POLICY "Users can update own data" ON users
+     FOR UPDATE USING (auth.uid() = id);
+   
+   -- Orders table: users can only see their own orders
+   CREATE POLICY "Users can view own orders" ON orders
+     FOR SELECT USING (auth.uid() = user_id);
+   
+   CREATE POLICY "Users can insert own orders" ON orders
+     FOR INSERT WITH CHECK (auth.uid() = user_id);
+   
+   -- Favorites table: users can only access their favorites
+   CREATE POLICY "Users can manage own favorites" ON favorites
+     FOR ALL USING (auth.uid() = user_id);
+   
+   -- Cart table: users can only access their cart
+   CREATE POLICY "Users can manage own cart" ON cart_items
+     FOR ALL USING (auth.uid() = user_id);
+   
+   -- Digital wallet: users can only access their wallet
+   CREATE POLICY "Users can view own wallet" ON digital_wallets
+     FOR SELECT USING (auth.uid() = user_id);
+   ```
+
+2. **Verify RLS in Supabase Dashboard:**
+   - Go to Authentication > Policies in Supabase
+   - Check that every table has RLS enabled and policies defined
+   - Test policies by attempting unauthorized access
+   - Use Lovable's Security Reviewer to analyze your entire app for vulnerabilities
+
+3. **API Key Protection - CRITICAL:**
+   Never put API keys in frontend code; store them in environment variables or Supabase Edge Functions
+   
+   **Safe API Key Usage:**
+   - Store Shopify API keys in Supabase Secrets (not in code)
+   - Use Supabase Edge Functions for sensitive operations
+   - Never expose private keys in client-side code
+   - Rotate keys regularly
+   
+   **Create Edge Function for Secure Operations:**
+   ```typescript
+   // Supabase Edge Function: /functions/secure-payment/index.ts
+   import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+   
+   serve(async (req) => {
+     // API key stored in Supabase Secrets, not in code
+     const apiKey = Deno.env.get('SHOPIFY_API_KEY')
+     
+     // Verify user is authenticated
+     const authHeader = req.headers.get('Authorization')
+     if (!authHeader) {
+       return new Response('Unauthorized', { status: 401 })
+     }
+     
+     // Your secure logic here
+   })
+   ```
+
+4. **Client-Side Encryption (Additional Layer):**
+   While RLS is mandatory, add encryption for sensitive fields:
+   
+   ```javascript
+   // Use Web Crypto API for sensitive data encryption
+   async function encryptData(data, userPassword) {
+     const enc = new TextEncoder();
+     const keyMaterial = await crypto.subtle.importKey(
+       "raw",
+       enc.encode(userPassword),
+       { name: "PBKDF2" },
+       false,
+       ["deriveKey"]
+     );
+     
+     const key = await crypto.subtle.deriveKey(
+       {
+         name: "PBKDF2",
+         salt: enc.encode("unique-salt-per-user"),
+         iterations: 100000,
+         hash: "SHA-256"
+       },
+       keyMaterial,
+       { name: "AES-GCM", length: 256 },
+       false,
+       ["encrypt", "decrypt"]
+     );
+     
+     const iv = crypto.getRandomValues(new Uint8Array(12));
+     const encrypted = await crypto.subtle.encrypt(
+       { name: "AES-GCM", iv: iv },
+       key,
+       enc.encode(JSON.stringify(data))
+     );
+     
+     return { encrypted, iv };
+   }
+   ```
+
+5. **Database Synchronization with Security:**
+   - Store encrypted data on server with user's encryption key
+   - Use IndexedDB for local encrypted storage
+   - Implement conflict resolution: timestamp-based with user confirmation
+   - **CRITICAL:** On CRUD operations:
+     - Check user authentication FIRST
+     - Verify RLS policies allow operation
+     - Compare local and server data hashes
+     - Sync differences only for authenticated user's data
+   - Queue offline operations securely
+   - Validate all data before syncing
+
+6. **Input Validation & Sanitization:**
+   Implement input validation to prevent SQL injection, XSS, and file upload attacks
+   
+   - Sanitize all user inputs before database operations
+   - Use parameterized queries (Supabase does this automatically)
+   - Validate file uploads (type, size, content)
+   - Implement Content Security Policy (CSP) headers
+   - Escape HTML in user-generated content
+
+7. **Authentication Security:**
+   - Password requirements: minimum 12 characters, mixed case, numbers, special chars
+   - Use bcrypt or Argon2 for password hashing (Supabase handles this)
+   - Implement rate limiting: max 5 login attempts, then 15-minute lockout
+   - Session timeout: 30 minutes of inactivity
+   - Require 2FA for sensitive operations (profile changes, large purchases)
+   - Implement CSRF protection tokens
+
+8. **HTTPS & Transport Security:**
+   - Enforce HTTPS for all connections (Lovable does this automatically)
+   - Use TLS 1.3 for all data transmission
+   - Implement HTTP Strict Transport Security (HSTS) headers
+   - Set secure cookie flags (HttpOnly, Secure, SameSite)
+
+**Security Testing Checklist Before Launch:**
+- [ ] Run Lovable's Security Review and resolve ALL critical and high-severity issues
+- [ ] Manually verify RLS policies in Supabase dashboard
+- [ ] Test unauthorized access attempts (try accessing other users' data)
+- [ ] Verify API keys are NOT in frontend code (check browser dev tools)
+- [ ] Test SQL injection attempts on all input fields
+- [ ] Test XSS attempts in user-generated content
+- [ ] Verify session timeout works correctly
+- [ ] Test rate limiting on login attempts
+- [ ] Check that sensitive data is encrypted in transit (HTTPS)
+- [ ] Verify file upload restrictions work
+- [ ] Test offline queue doesn't expose other users' data
+- [ ] Hire a security consultant if handling sensitive financial data
+
+**Ongoing Security Maintenance:**
+- Perform security reviews every time you make significant changes to the app
+- Monitor Supabase logs for suspicious activity
+- Keep dependencies updated (Lovable helps with this)
+- Rotate API keys quarterly
+- Review and update RLS policies as features change
+- Implement error tracking (Sentry) to catch security issues
+
+---
+
+### Shopify Integration
+
+**Complete Setup Instructions:**
+
+1. **Initial Shopify Setup:**
+   - Create Shopify account at shopify.com
+   - For development: Use Shopify Partner account to create development stores (free)
+   - For production: Use your actual Shopify store
+   - Enable Shopify Admin API access
+
+2. **Connect Lovable to Shopify:**
+   - In Lovable: Go to Integrations menu → Select Shopify
+   - Authorize Lovable to access your Shopify store
+   - Provide: Store URL, Admin API access token
+   - Test connection by fetching a sample product
+
+3. **Configure Shopify for Print-On-Demand:**
+   - Install Print-On-Demand app from Shopify App Store (e.g., Printful, Printify)
+   - Connect POD provider account
+   - Create product catalog with holiday-themed designs
+   - Set up product variants (sizes, colors)
+   - Configure shipping zones and rates
+   - Set up tax calculations
+
+4. **Product Synchronization:**
+   - Use Shopify Storefront API (not Admin API) for frontend
+   - Fetch products with GraphQL queries:
+   ```graphql
+   query {
+     products(first: 50) {
+       edges {
+         node {
+           id
+           title
+           description
+           priceRange {
+             minVariantPrice {
+               amount
+               currencyCode
+             }
+           }
+           images(first: 5) {
+             edges {
+               node {
+                 src
+                 altText
+               }
+             }
+           }
+           variants(first: 10) {
+             edges {
+               node {
+                 id
+                 title
+                 priceV2 {
+                   amount
+                 }
+                 availableForSale
+               }
+             }
+           }
+         }
+       }
+     }
+   }
+   ```
+
+5. **Cart & Checkout Implementation:**
+   - Use Shopify's cart management system
+   - Create cart with Storefront API: `checkoutCreate` mutation
+   - Add items: `checkoutLineItemsAdd` mutation
+   - Update quantities: `checkoutLineItemsUpdate` mutation
+   - Remove items: `checkoutLineItemsRemove` mutation
+   - Redirect to Shopify checkout URL for payment
+   - Handle post-purchase webhooks for order confirmation
+
+6. **Inventory Management:**
+   - Real-time inventory sync from Shopify
+   - Display "Out of Stock" for unavailable items
+   - Update cart if items become unavailable
+   - Set up low-stock alerts
+
+7. **Order Management:**
+   - Fetch customer orders via Shopify Customer API
+   - Display order history in Orders page
+   - Provide order tracking information
+   - Handle refunds through Shopify Admin
+
+8. **Shopify Webhooks Setup:**
+   - Configure webhooks for: orders/create, orders/updated, products/update
+   - Create Supabase Edge Function to receive webhooks
+   - Update local database when orders/products change
+   - Validate webhook signatures for security
+
+**Important Shopify Security:**
+- Never expose Admin API tokens in frontend code
+- Use Storefront API tokens (public) for frontend
+- Store Admin API tokens in Supabase Edge Functions
+- Validate all cart operations on Shopify side
+- Implement webhook signature verification
+
+---
+
+## USER AUTHENTICATION & ACCOUNTS
+
+### Guest Access (Default)
+- All visitors start as guests with limited features
+- Guest can browse products, view details, but cannot purchase
+- Guest cart saved to localStorage (unencrypted for guests)
+- Prompt to create account at checkout
+
+### Account Creation Options
+Implement three authentication methods:
+1. **Email Authentication:**
+   - Email verification required
+   - Password requirements: min 12 characters, uppercase, lowercase, number, special char
+   - Implement password strength meter
+   - Use bcrypt or Argon2 for password hashing
+
+2. **Phone Authentication:**
+   - SMS verification via Twilio or similar
+   - Support international phone numbers
+   - Rate limiting on SMS sends
+
+3. **Authenticator App:**
+   - Support TOTP (Google Authenticator, Authy)
+   - Generate QR code for easy setup
+   - Provide backup codes (encrypted, of course)
+
+### Two-Factor Authentication (Optional)
+- Allow users to enable 2FA on any account type
+- Support: SMS, Authenticator App, Email codes
+- Require 2FA for sensitive operations (profile changes, purchases over threshold)
+
+### Account Settings Interface
+**Design Specifications:**
+- Appears as centered overlay (10% margin from edges)
+- Rounded corners (12px border-radius)
+- Smooth fade-in animation (300ms)
+- 80% darkened backdrop with blur effect
+- Triggered by account picture button (top right of navbar)
+- Contains tabs: Profile, Security, Payment Methods, Addresses, Privacy
+
+**Profile Settings:**
+- Display name (encrypted)
+- Profile picture upload
+- Email/phone/authenticator management
+- Account deletion option
+
+---
+
+## UI/UX DESIGN SYSTEM
+
+### Top Navigation Bar
+**Always visible, fixed position, responsive**
+
+**Structure:**
+- Height: 64px desktop, 56px mobile
+- Background: White with subtle shadow
+- Z-index: 1000
+
+**Left Section:**
+- Hamburger menu icon (☰) - opens sidebar
+- Icon color: #2D3748 (dark gray)
+- Hover effect: background #F7FAFC
+
+**Center Section:**
+- App name "Top Holidays" in cursive font (Pacifico or Dancing Script)
+- Font size: 24px desktop, 20px mobile
+- Color: #2D3748
+- Clickable - navigates to homepage with fade transition
+
+**Holiday Decorations:**
+- Dynamic SVG decorations around title and account icon based on current date:
+  - Christmas (Dec 1-26): snowflakes, trees, ornaments
+  - New Year (Dec 27-Jan 2): fireworks, champagne glasses, "2024" glasses
+  - Valentine's Day (Feb 1-15): hearts, cupids, roses
+  - Halloween (Oct 15-31): bats, witches, pumpkins, ghosts
+  - Easter (date-based): eggs, bunnies
+  - Default: subtle festive sparkles
+
+**Right Section:**
+- Cart icon (shopping-cart) with notification badge
+  - Badge shows item count (red circle, white text)
+  - Badge only visible when cart has items
+  - Orange background when on cart page
+- Account button (user-circle icon)
+  - 40px diameter circular button
+  - Opens account overlay on click
+
+### Sidebar Menu
+**Triggered by hamburger menu**
+
+**Animation:**
+- Slides from left edge
+- Width: 75% of screen width (max 320px)
+- Duration: 350ms ease-out
+- Page darkens to 80% opacity progressively during slide
+- Close by: clicking hamburger, clicking darkened area, selecting menu item
+
+**Top Section - Digital Wallet (50% of sidebar height):**
+```
+╔══════════════════════════════╗
+║  💰 Your Digital Wallet      ║
+║  ────────────────────────   ║
+║  TopHolidays Coins: 1,250    ║
+║  Cash Balance: $15.30        ║
+║  ────────────────────────   ║
+║  ℹ️ How Coins Work:          ║
+║  Earn 10x coins on promoted  ║
+║  products (⭐ icon). Buy any ║
+║  promoted product 10 times   ║
+║  to get one free with coins! ║
+╚══════════════════════════════╝
+```
+
+**Separator:** Gray horizontal line with gradient fade edges
+
+**Navigation Links (with icons):**
+- 🛍️ Browse Products
+- 🛒 See the Cart
+- ❤️ Your Favorites
+- 📦 All Orders
+- 💬 Customer Care
+- ℹ️ About Us
+
+**Footer Links (smaller text):**
+- EULA | Privacy Policy
+
+### Loading Screen
+**Initial app load only**
+
+**Design:**
+- Full screen overlay (z-index: 9999)
+- Animated gradient background: shades of green (#10B981 → #34D399 → #6EE7B7)
+- Gradient animation: linear infinite 3s
+- Center content (flex centered):
+  - App name "Top Holidays" (cursive, 32px, white)
+  - Loading spinner (48px, white, rotating)
+  - If logged in: "Welcome back, [Username]!" (16px, white, 400ms delay)
+
+**Behavior:**
+- Shows during initial bundle load
+- Minimum display: 800ms (prevent flash)
+- Fades out 400ms once components ready
+
+---
+
+## HOMEPAGE DESIGN
+
+### Welcome Section
+```
+Welcome, [Username/Guest]! 
+Happy shopping! [Holiday] is coming.
+```
+- Personalized greeting (use actual name or "Guest")
+- Dynamic holiday message based on current date
+- Font: 24px bold for name, 18px regular for message
+- Padding: 24px all sides
+
+### Quick Action Grid (2x2, responsive to 1x4 on mobile)
+
+**Card Design:**
+- Rounded square white cards
+- Elevation shadow: 0 2px 8px rgba(0,0,0,0.1)
+- Hover: scale(1.05), shadow increases
+- Click: fade-out transition to destination
+
+**Icons & Colors:**
+1. **My Favorites** (Heart) - Light Pink (#FFF1F2) background
+2. **Cart** (Shopping Cart) - Dark Green (#065F46) background
+3. **Browse Products** (Shirt icon) - Dark Blue (#1E3A8A) background
+4. **Orders** (Clock-Arrow) - Light Blue (#DBEAFE) background
+
+- Icon size: 48px
+- Icon label: centered bottom, 14px
+- Card size: calc(50% - 16px) with gap
+
+### Promoted Products Section
+
+**Section Header:**
+- Text: "Promotions" in cursive (Dancing Script, 28px)
+- Color: Dark Red (#991B1B)
+- Centered with decorative line below
+- Line: 75% width, gradient fade edges, dark red
+
+**Product Grid:**
+- 2 columns mobile, up to 5 columns desktop
+- Same card design as main product browsing (see below)
+- All cards show teal star (⭐) in top-left
+
+---
+
+## PRODUCT BROWSING PAGE
+
+### Product Card Design
+**CRITICAL SPECIFICATIONS - Follow exactly:**
+
+**Container:**
+- Aspect ratio managed cards
+- Gap: 16px between cards
+- Padding: 16px around grid
+- Responsive columns: 2 (mobile), 3 (tablet), 4 (desktop), 5 (large desktop)
+
+**Card Structure (Top to Bottom):**
+
+1. **Product Image Container:**
+   - Aspect ratio: 3:4 (vertical)
+   - Takes 75% of card height
+   - Rounded corners: 8px
+   - Position: relative (for overlays)
+
+2. **Top Overlays (Absolute positioned on image):**
+   - **Favorite Heart (Top Right):**
+     - Icon: heart (outline when not favorited, filled red when favorited)
+     - Size: 24px
+     - Position: 12px from top, 12px from right
+     - Background: white circle with shadow for contrast
+     - Click: toggle favorite status
+   
+   - **Promoted Star (Top Left):**
+     - Icon: 6-point star, teal fill (#14B8A6)
+     - Size: 24px
+     - Position: 12px from top, 12px from left
+     - Only visible on promoted products
+     - No interaction (visual indicator only)
+
+3. **Bottom Image Overlay (Dark transparent box):**
+   - Height: 20% of image height
+   - Background: rgba(0, 0, 0, 0.6) with backdrop-blur
+   - Rounded bottom corners matching image
+   - Contains:
+     - **Previously Purchased Icon (Left):**
+       - Icon: circular arrow (clock-arrow)
+       - Color: white
+       - Size: 20px
+       - Only visible if user bought this before
+     - **Price (Right):**
+       - Text: bold, white, 18px
+       - Format: $XX.XX with currency symbol
+
+4. **Rating Section (Below image):**
+   - Left aligned
+   - 3 yellow star icons (★) filled based on average rating
+   - Text: "(X ratings)" in gray, 14px
+   - All icons same size: 16px
+   - Padding: 8px top
+
+5. **Product Name:**
+   - 2 lines max, ellipsis if overflow
+   - Font: 16px, bold, dark gray (#2D3748)
+   - Line height: 1.4
+   - Padding: 4px top
+
+### Product Details Overlay Page
+
+**Opening Animation:**
+- Scale from 10% to 100% from center
+- Duration: 400ms ease-out
+- Placeholder gray boxes during animation
+- Data injected when fully expanded
+- Backdrop darkens from 0% to 80% progressively
+
+**Closing Methods:**
+- Downward arrow at top center (between rounded corners)
+- Swipe/scroll down from top
+- Closing animation: scale to center, reverse of opening
+
+**Page Structure (Scrollable):**
+
+**Header Section:**
+- Product name (24px, bold)
+- Star rating with count
+- Price (32px, bold) with promotional badge if applicable
+
+**Media Gallery:**
+- Primary image (full width)
+- Thumbnail strip below (horizontal scroll, 5 visible)
+- Tap thumbnail to change primary
+- Pinch to zoom enabled
+
+**Action Buttons Row:**
+- "Add to Cart" (primary, blue, full width)
+- "Save to Favorites" (secondary, outline, heart icon)
+
+**Tabs Section:**
+- Description | Details | Shipping | Reviews
+- Sticky below header when scrolling
+
+**Description Tab:**
+- Full product description
+- Material info
+- Care instructions
+- Size chart
+
+**Details Tab:**
+- Vendor information
+- Product ID/SKU
+- Available sizes/colors
+- Stock status
+
+**Shipping Tab:**
+- Estimated delivery time by location
+- Shipping costs calculator
+- Available shipping methods
+- Return policy
+
+**Reviews Tab:**
+- Star rating distribution graph
+- Sort options: Most Recent, Highest Rated, Lowest Rated
+- Individual review cards:
+  - Username
+  - Star rating
+  - Date
+  - Review text
+  - Helpful votes
+  - Images (if any)
+
+**Similar Products Section:**
+- Horizontal scroll carousel
+- Mini product cards
+- "You might also like" header
+
+**Recommended Bundles:**
+- "Frequently bought together"
+- Bundle price vs individual prices
+- "Add bundle to cart" button
+
+---
+
+## CART PAGE & FAVORITES
+
+### Cart Page Navigation
+- Accessed via cart icon in navbar
+- Slides in from left to right (350ms)
+- Cart icon gains orange background when active
+- Reverse animation when leaving cart
+
+### Cart Structure
+
+**Header:**
+- "Your Cart" title
+- Item count
+- Clear cart button (confirmation modal)
+
+**Cart Items List:**
+Each item card shows:
+- Product image (80x80px, rounded)
+- Product name
+- Size/color selection
+- Price per unit
+- Quantity controls (+/- buttons, number input)
+- Subtotal for item
+- Remove button (trash icon)
+
+**Cart Summary (Bottom/Sticky):**
+- Subtotal
+- Estimated shipping
+- Tax calculation
+- Total (bold, large)
+- Promo code input field
+- "Proceed to Checkout" button (full width, green)
+
+**Empty Cart State:**
+- Empty box illustration
+- "Your cart is empty" message
+- "Start Shopping" button → Browse Products
+
+### Favorites Section (Below Cart)
+
+**Separator:** "━━━ Your Favorites ━━━"
+
+**Favorites Grid:**
+- Same card design as product browsing
+- Smaller size (80% scale)
+- Actions on each card:
+  - "Move to Cart" button
+  - "Remove from Favorites" icon
+  - Tap image/title → View product details
+
+**Empty Favorites State:**
+- Heart illustration
+- "No favorites yet"
+- "Browse products and save your favorites" message
+
+**CRITICAL RULE:** Users can ONLY purchase items explicitly added to cart. Favorites are a wishlist/bookmark feature.
+
+---
+
+## ORDERS PAGE
+
+### Layout
+- List view of all orders (newest first)
+- Filters: All, Pending, Shipped, Delivered, Cancelled
+- Search by order number
+
+### Order Card Design
+**Expandable accordion cards:**
+
+**Collapsed State:**
+- Order number
+- Date placed
+- Status badge (color-coded)
+- Total amount
+- Number of items
+- Expand arrow
+
+**Expanded State:**
+- All items in order with thumbnails
+- Shipping address
+- Payment method (masked)
+- Tracking information (if available)
+- Invoice download button
+- "Reorder" button
+- "Contact Support" button (if issues)
+
+### Order Status Colors
+- Pending: Yellow (#F59E0B)
+- Processing: Blue (#3B82F6)
+- Shipped: Purple (#8B5CF6)
+- Delivered: Green (#10B981)
+- Cancelled: Red (#EF4444)
+
+---
+
+## DIGITAL COINS REWARD SYSTEM
+
+### Earning Coins
+- Only promoted products (⭐ icon) offer coins
+- Earn: Product price × 10 coins per purchase
+- Example: $25 product = 250 coins earned
+- Coins credited after order confirmation
+
+### Spending Coins
+- 1 coin = $0.01 value
+- Can buy promoted products with coins only
+- Cost: Product price × 100 coins
+- Example: $25 product = 2,500 coins to purchase
+- Mixed payment: coins + cash allowed
+
+### Wallet Display
+- Real-time balance in sidebar
+- Transaction history in account settings
+- Expiration warnings (if coins expire)
+- Coins are transferable between any promoted products
+
+### Business Logic
+**Important:** This creates customer loyalty by requiring 10 purchases of promoted items to earn enough for one free promoted item. Users can mix and match - buy one promoted product 10 times, or 10 different promoted products once each, to earn enough coins for any single promoted product.
+
+---
+
+## RESPONSIVE DESIGN REQUIREMENTS
+
+### Breakpoints
+```css
+mobile: 0-640px
+tablet: 641px-1024px
+desktop: 1025px-1440px
+large: 1441px+
+```
+
+### Mobile Considerations
+- Touch targets minimum 44x44px
+- Bottom navigation alternative for key actions
+- Swipe gestures for common actions
+- Hamburger menu primary navigation
+- Simplified cart view
+
+### Desktop Enhancements
+- Hover states on all interactive elements
+- Keyboard navigation support
+- Breadcrumb navigation
+- Mega menu possible for categories
+- Multi-column layouts where appropriate
+
+---
+
+## ACCESSIBILITY REQUIREMENTS
+
+### WCAG 2.1 Level AA Compliance
+- Proper heading hierarchy (h1-h6)
+- Alt text for all images
+- ARIA labels for interactive elements
+- Keyboard navigation (Tab, Enter, Escape, Arrow keys)
+- Focus indicators visible and clear
+- Color contrast minimum 4.5:1 for normal text, 3:1 for large text
+- Screen reader friendly
+- Form labels and error messages
+- Skip to content link
+
+### Semantic HTML
+- Use proper HTML5 elements (nav, main, article, aside, footer)
+- Button vs link appropriate usage
+- Form elements properly labeled
+
+---
+
+## ERROR HANDLING & EDGE CASES
+
+### Network Errors
+- Offline detection with informative banner
+- Queue failed requests for retry
+- Fallback to cached data when possible
+- "Retry" button for failed operations
+
+### Validation
+- Client-side validation before submission
+- Real-time field validation feedback
+- Clear error messages (not generic)
+- Prevent double submissions
+
+### Security Errors
+- Rate limiting on login attempts (5 attempts, 15min lockout)
+- Session timeout handling (30min idle)
+- Invalid token handling with re-authentication
+- SQL injection prevention (parameterized queries)
+- XSS prevention (sanitize all user inputs)
+
+---
+
+## PERFORMANCE OPTIMIZATION
+
+### Image Optimization
+- Use WebP format with fallbacks
+- Lazy load images below fold
+- Responsive images (srcset)
+- Product image compression
+- CDN for static assets
+
+### Code Optimization
+- Tree shaking unused code
+- Code splitting by route
+- Minification and compression
+- Preload critical resources
+- Defer non-critical scripts
+
+### Database Optimization
+- Index frequently queried fields
+- Limit query result sets
+- Cache expensive queries
+- Batch database operations
+- Connection pooling
+
+---
+
+## TESTING REQUIREMENTS
+
+### Before Launch Checklist
+✓ Test all authentication methods
+✓ Test encryption/decryption flows
+✓ Verify RLS policies in Supabase
+✓ Test cart operations (add, remove, update quantity)
+✓ Test checkout flow end-to-end
+✓ Verify coin earning/spending calculations
+✓ Test on multiple devices and browsers
+✓ Verify PWA install works on iOS and Android
+✓ Test offline functionality
+✓ Security scan using Lovable's security reviewer
+✓ Check all animations and transitions
+✓ Verify responsive design at all breakpoints
+✓ Test with screen reader
+✓ Lighthouse score: Performance >90, Accessibility 100, Best Practices 100, SEO >90
+
+---
+
+## DEPLOYMENT INSTRUCTIONS
+
+### Pre-Deployment
+1. Run Lovable security review
+2. Fix all critical and high-priority issues
+3. Review and tighten all RLS policies
+4. Remove any console.logs or debug code
+5. Verify all environment variables are set
+6. Test with production Shopify account
+7. Set up error tracking (Sentry or similar)
+8. Configure analytics (Google Analytics/Mixpanel)
+
+### Deployment Steps
+1. Connect GitHub repository
+2. Configure Vercel (or preferred hosting)
+3. Set custom domain
+4. Enable SSL/TLS
+5. Configure CDN
+6. Set up monitoring and alerts
+7. Create backup strategy
+
+### Post-Deployment
+- Monitor error rates
+- Check performance metrics
+- Verify PWA installation
+- Test all user flows
+- Monitor security scanner continuously
+
+---
+
+## ADDITIONAL FEATURES TO IMPLEMENT
+
+### Nice-to-Have Features
+- Wishlist sharing (social)
+- Product reviews with images
+- Size recommendation based on previous purchases
+- Email notifications for order updates
+- Push notifications for promotions
+- Multi-currency support
+- Multi-language support
+- Dark mode toggle
+- Product comparisons
+- Recently viewed products
+- Search history
+- Voice search
+
+---
+
+## STYLE GUIDE
+
+### Color Palette
+**Primary:**
+- Green: #10B981 (success, promotions)
+- Dark Green: #065F46 (cart, CTAs)
+- Teal: #14B8A6 (promoted stars, accents)
+
+**Secondary:**
+- Dark Blue: #1E3A8A (browse icon)
+- Light Blue: #DBEAFE (orders icon)
+- Light Pink: #FFF1F2 (favorites icon)
+
+**Semantic:**
+- Red: #EF4444 (errors, notifications, favorite filled)
+- Yellow: #F59E0B (warnings, pending)
+- Dark Red: #991B1B (section headers)
+
+**Neutrals:**
+- Dark Gray: #2D3748 (text primary)
+- Medium Gray: #718096 (text secondary)
+- Light Gray: #F7FAFC (backgrounds)
+- White: #FFFFFF
+
+### Typography
+**Fonts:**
+- Cursive/Display: Pacifico or Dancing Script (app name, section headers)
+- Body: Inter or SF Pro (all other text)
+
+**Sizes:**
+- Heading 1: 32px
+- Heading 2: 28px
+- Heading 3: 24px
+- Heading 4: 20px
+- Body Large: 18px
+- Body: 16px
+- Body Small: 14px
+- Caption: 12px
+
+### Spacing Scale
+- xs: 4px
+- sm: 8px
+- md: 16px
+- lg: 24px
+- xl: 32px
+- 2xl: 48px
+- 3xl: 64px
+
+### Border Radius
+- sm: 4px (buttons, inputs)
+- md: 8px (cards, images)
+- lg: 12px (overlays, modals)
+- full: 9999px (pills, badges)
+
+---
+
+## PROMPTING STRATEGY FOR LOVABLE
+
+### Initial Prompt Structure
+**Use this exact sequence:**
+
+1. **Foundation (Prompt 1):**
+```
+Create a Progressive Web App e-commerce store called "Top Holidays" using React and Shopify integration.
+
+Setup requirements:
+- Enable Shopify integration with sandbox store
+- Configure PWA with manifest.json and service worker
+- Set up Supabase for database with encryption
+- Create authentication system with email/phone/authenticator options
+- Implement client-side encryption using Web Crypto API (AES-256-GCM, RSA-2048)
+- Set up IndexedDB for local encrypted storage
+
+First, set up the project foundation with proper routing and Shopify connection.
+```
+
+2. **UI Foundation (Prompt 2):**
+```
+Implement the top navigation bar with:
+- Left: Hamburger menu (opens sidebar)
+- Center: "Top Holidays" in cursive font (Pacifico), clickable to homepage
+- Right: Cart icon with badge counter, account button
+
+Add dynamic holiday decorations (Christmas theme for now with snowflakes and trees as SVG around title and account icon).
+
+Navigation bar must be fixed, always visible, with proper responsive design.
+```
+
+3. **Sidebar (Prompt 3):**
+```
+Create the sidebar menu that slides from left (75% width, max 320px):
+- Top section: Digital wallet display with coins and cash balance, plus info box explaining coin system
+- Gray separator line
+- Navigation links with icons: Browse Products, Cart, Favorites, Orders, Customer Care, About Us
+- Footer with EULA and Privacy Policy links
+- Sidebar opens/closes with animations, darkens page to 80% when open
+```
+
+4. **Continue incrementally...**
+
+Build the app in small steps:
+- Loading screen
+- Homepage with greeting and action grid
+- Product browsing page with cards
+- Product detail overlay
+- Cart and favorites
+- Orders page
+- Account settings
+- Encryption system
+- Database sync logic
+
+### Best Practices for Lovable Prompts
+1. **Be specific:** Include exact measurements, colors, and behaviors
+2. **One feature at a time:** Don't overwhelm with multiple complex features
+3. **Use Chat Mode:** For clarifications without consuming credits
+4. **Provide examples:** Show what you mean with descriptions or wireframes
+5. **Iterate:** First get it working, then refine visuals
+6. **Test frequently:** Preview after each major change
+7. **Use Select & Edit:** Click elements to make targeted changes
+8. **Request security review:** Before publishing, ask Lovable to review security
+9. **Fix errors immediately:** Use "Try to Fix" button or describe the problem
+10. **Refactor regularly:** Keep code clean and maintainable
+
+### Common Pitfalls to Avoid
+❌ Don't: Put API keys or secrets in prompts
+✓ Do: Describe what you need and let Lovable guide secure implementation
+
+❌ Don't: Request massive changes in one prompt
+✓ Do: Break into logical steps (navigation → homepage → products → cart)
+
+❌ Don't: Assume complex backend logic will work first try
+✓ Do: Test each database operation and encryption step carefully
+
+❌ Don't: Forget about RLS policies
+✓ Do: Always review and test Supabase security settings
+
+❌ Don't: Skip mobile testing
+✓ Do: Check responsive design at each breakpoint during development
+
+---
+
+### CRITICAL: Pre-Deployment Security Checklist
+
+**⚠️ DO NOT DEPLOY until ALL items are checked and verified:**
+
+#### Database Security (HIGHEST PRIORITY)
+- [ ] Run `SELECT tablename FROM pg_tables WHERE schemaname = 'public'` in Supabase SQL editor to list all tables
+- [ ] For EACH table, verify RLS is enabled: `SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public'`
+- [ ] For EACH table, verify policies exist: `SELECT * FROM pg_policies WHERE schemaname = 'public'`
+- [ ] Manually test unauthorized access: create second test user, try to access first user's data
+- [ ] Verify unauthenticated users cannot access any user data
+- [ ] Test that users can ONLY access their own data (user_id = auth.uid())
+- [ ] Check that admin operations require admin role (if applicable)
+- [ ] Run Lovable's Security Review and resolve ALL errors and warnings
+- [ ] Use browser dev tools network tab: verify no sensitive data in API responses for other users
+
+#### API Key & Secrets Security
+- [ ] Search entire codebase for hardcoded API keys (search for common patterns: "api_key", "secret", "token")
+- [ ] Verify Shopify Admin API token is ONLY in Supabase Edge Functions, not in frontend
+- [ ] Verify all environment variables are properly configured in hosting platform
+- [ ] Check that .env files are in .gitignore (not committed to Git)
+- [ ] Rotate any API keys that were accidentally exposed
+- [ ] Verify API keys have minimum required permissions (principle of least privilege)
+- [ ] Test that frontend still works without admin API keys (should use public Storefront API)
+
+#### Authentication & Authorization
+- [ ] Test password requirements are enforced (12+ chars, mixed case, numbers, special)
+- [ ] Test rate limiting: attempt 6 failed logins, verify 15-minute lockout
+- [ ] Test session timeout: leave app idle 30 minutes, verify user logged out
+- [ ] Test 2FA (if enabled): verify codes are required and validated
+- [ ] Test password reset flow end-to-end
+- [ ] Verify email verification is required (if implemented)
+- [ ] Test that user cannot access protected routes when logged out
+
+#### Input Validation & Injection Prevention
+- [ ] Test SQL injection: try `' OR '1'='1` in all input fields
+- [ ] Test XSS: try `<script>alert('XSS')</script>` in all text inputs
+- [ ] Test file uploads: try uploading .exe, .php, oversized files
+- [ ] Verify all user inputs are sanitized before display
+- [ ] Test that HTML in user content is escaped
+- [ ] Verify Content Security Policy headers are set
+- [ ] Test that URLs in user content are validated
+
+#### HTTPS & Transport Security
+- [ ] Verify entire site runs on HTTPS (no mixed content warnings)
+- [ ] Check that cookies have Secure and HttpOnly flags
+- [ ] Verify HSTS headers are set
+- [ ] Test that HTTP requests redirect to HTTPS
+- [ ] Verify WebSocket connections use WSS (if applicable)
+
+#### PWA Security
+- [ ] Verify service worker only caches public assets (no sensitive data)
+- [ ] Check that service worker doesn't expose API keys
+- [ ] Test offline mode doesn't leak other users' data
+- [ ] Verify cached data respects authentication (cleared on logout)
+- [ ] Test that service worker updates properly with new versions
+
+#### Business Logic Security
+- [ ] Test that users can only modify their own cart
+- [ ] Test that users can only access their own orders
+- [ ] Test that order totals are validated server-side (not just client-side)
+- [ ] Test that discount codes are validated properly
+- [ ] Verify digital coins balance cannot be manipulated client-side
+- [ ] Test that promoted product coin earning/spending is correctly calculated
+- [ ] Verify that checkout process validates inventory availability
+
+#### Error Handling & Logging
+- [ ] Verify error messages don't expose sensitive information
+- [ ] Test that stack traces are not visible to users in production
+- [ ] Check that errors are logged for monitoring (Sentry or similar)
+- [ ] Verify database connection errors handled gracefully
+- [ ] Test that API failures don't crash the app
+
+#### Data Privacy (GDPR Compliance)
+- [ ] Verify Privacy Policy is accessible and clear
+- [ ] Test that users can download their data
+- [ ] Test that users can delete their account and all data
+- [ ] Verify data retention policies are implemented
+- [ ] Check that email marketing requires opt-in consent
+- [ ] Verify cookie consent banner is displayed (if using cookies)
+
+#### Third-Party Integrations
+- [ ] Verify Shopify checkout is secured with HTTPS
+- [ ] Test that payment processing doesn't store card numbers locally
+- [ ] Verify POD provider integration is secure
+- [ ] Test that email provider credentials are protected
+- [ ] Check that analytics (if used) respects user privacy
+
+#### Performance & Availability
+- [ ] Run Lighthouse audit: aim for >90 Performance, 100 Accessibility
+- [ ] Test app on slow 3G network
+- [ ] Verify images are optimized and lazy-loaded
+- [ ] Test that app loads in <3 seconds on mobile
+- [ ] Verify service worker provides offline functionality
+- [ ] Test that database queries are optimized (no N+1 queries)
+
+#### Cross-Browser & Device Testing
+- [ ] Test on Chrome (desktop & mobile)
+- [ ] Test on Safari (desktop & iOS)
+- [ ] Test on Firefox (desktop & mobile)
+- [ ] Test on Edge (desktop)
+- [ ] Test PWA installation on each platform
+- [ ] Test on various screen sizes (320px to 2560px width)
+- [ ] Test with keyboard navigation only
+- [ ] Test with screen reader (VoiceOver or TalkBack)
+
+#### Backup & Recovery
+- [ ] Verify Supabase automatic backups are enabled
+- [ ] Test database restore procedure
+- [ ] Document recovery procedures
+- [ ] Set up monitoring and alerting for downtime
+- [ ] Create incident response plan
+
+#### Legal & Compliance
+- [ ] Privacy Policy published and linked in footer
+- [ ] Terms of Service / EULA published and linked
+- [ ] Cookie Policy (if using cookies)
+- [ ] Refund Policy clearly stated
+- [ ] Shipping Policy documented
+- [ ] Contact information (email, phone) visible
+
+### Post-Deployment Monitoring
+
+**Set up monitoring for:**
+- Error rate (target: <0.1%)
+- API response times (target: <200ms)
+- Page load times (target: <3s)
+- Security events (failed logins, unauthorized access attempts)
+- Uptime (target: 99.9%)
+- Database performance
+
+**Use tools like:**
+- Sentry (error tracking)
+- Google Analytics / Mixpanel (user behavior)
+- Uptime Robot (uptime monitoring)
+- Supabase Dashboard (database metrics)
+- Lighthouse CI (automated performance testing)
+
+**Schedule regular reviews:**
+- Weekly: Check error logs and security alerts
+- Monthly: Review access logs for suspicious activity
+- Quarterly: Conduct full security audit
+- Quarterly: Rotate API keys and review permissions
+- Annually: Penetration testing by security professional
+
+---
+
+## SUCCESS METRICS
+
+### Technical KPIs
+- Page load time: <3 seconds
+- Time to interactive: <4 seconds
+- Lighthouse scores: All >90
+- Error rate: <0.1%
+- API response time: <200ms avg
+- Database query time: <100ms avg
+
+### Business KPIs
+- Installation rate: >20% of visitors
+- Conversion rate: >2%
+- Cart abandonment: <70%
+- Average order value: Track and optimize
+- Return visitor rate: >40%
+- Coin redemption rate: Track adoption
+
+---
+
+This comprehensive specification provides everything needed to build a secure, high-performance, user-friendly PWA e-commerce application. Follow the prompting strategy, implement features incrementally, test thoroughly, and maintain security best practices throughout development.
+
+Good luck building Top Holidays!

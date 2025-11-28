@@ -1,11 +1,20 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from './test-utils'
+import { MemoryRouter } from 'react-router-dom'
 import Cart from '../pages/Cart'
 
 const mockCartItems = [
   { id: 'p1', title: 'Festive Christmas Sweater', price: 39.99, qty: 2, image: 'https://picsum.photos/300/400?1' },
   { id: 'p2', title: 'Halloween Bat Tee', price: 24.99, qty: 1, image: 'https://picsum.photos/300/400?2' },
 ]
+
+function renderWithRouter(ui: React.ReactElement) {
+  return render(
+    <MemoryRouter>
+      {ui}
+    </MemoryRouter>
+  )
+}
 
 describe('Cart Page', () => {
   beforeEach(() => {
@@ -17,13 +26,13 @@ describe('Cart Page', () => {
   })
 
   it('displays empty cart message when cart is empty', () => {
-    render(<Cart />)
+    renderWithRouter(<Cart />)
     expect(screen.getByText(/Your cart is empty/i)).toBeInTheDocument()
   })
 
   it('displays cart items when cart has items', () => {
     localStorage.setItem('cart', JSON.stringify(mockCartItems))
-    render(<Cart />)
+    renderWithRouter(<Cart />)
     
     expect(screen.getByText('Festive Christmas Sweater')).toBeInTheDocument()
     expect(screen.getByText('Halloween Bat Tee')).toBeInTheDocument()
@@ -31,7 +40,7 @@ describe('Cart Page', () => {
 
   it('displays correct item quantities', () => {
     localStorage.setItem('cart', JSON.stringify(mockCartItems))
-    render(<Cart />)
+    renderWithRouter(<Cart />)
     
     const quantityInputs = screen.getAllByDisplayValue(/[12]/)
     expect(quantityInputs.length).toBeGreaterThan(0)
@@ -39,7 +48,7 @@ describe('Cart Page', () => {
 
   it('increases item quantity when + button is clicked', async () => {
     localStorage.setItem('cart', JSON.stringify([mockCartItems[0]]))
-    render(<Cart />)
+    renderWithRouter(<Cart />)
     
     const plusButtons = screen.getAllByText('+')
     fireEvent.click(plusButtons[0])
@@ -52,7 +61,7 @@ describe('Cart Page', () => {
 
   it('decreases item quantity when - button is clicked', async () => {
     localStorage.setItem('cart', JSON.stringify([mockCartItems[0]]))
-    render(<Cart />)
+    renderWithRouter(<Cart />)
     
     const minusButtons = screen.getAllByText('-')
     fireEvent.click(minusButtons[0])
@@ -66,7 +75,7 @@ describe('Cart Page', () => {
   it('does not decrease quantity below 1', async () => {
     const singleItem = [{ ...mockCartItems[0], qty: 1 }]
     localStorage.setItem('cart', JSON.stringify(singleItem))
-    render(<Cart />)
+    renderWithRouter(<Cart />)
     
     const minusButtons = screen.getAllByText('-')
     fireEvent.click(minusButtons[0])
@@ -79,7 +88,7 @@ describe('Cart Page', () => {
 
   it('removes item when remove button is clicked', async () => {
     localStorage.setItem('cart', JSON.stringify(mockCartItems))
-    render(<Cart />)
+    renderWithRouter(<Cart />)
     
     const removeButtons = screen.getAllByLabelText('Remove')
     fireEvent.click(removeButtons[0])
@@ -93,7 +102,7 @@ describe('Cart Page', () => {
 
   it('calculates subtotal correctly', () => {
     localStorage.setItem('cart', JSON.stringify(mockCartItems))
-    render(<Cart />)
+    renderWithRouter(<Cart />)
     
     // Subtotal: (39.99 * 2) + (24.99 * 1) = 104.97
     expect(screen.getByText(/Subtotal: \$104\.97/i)).toBeInTheDocument()
@@ -101,14 +110,14 @@ describe('Cart Page', () => {
 
   it('calculates shipping correctly', () => {
     localStorage.setItem('cart', JSON.stringify(mockCartItems))
-    render(<Cart />)
+    renderWithRouter(<Cart />)
     
     expect(screen.getByText(/Estimated shipping: \$5\.00/i)).toBeInTheDocument()
   })
 
   it('calculates tax correctly', () => {
     localStorage.setItem('cart', JSON.stringify(mockCartItems))
-    render(<Cart />)
+    renderWithRouter(<Cart />)
     
     // Tax: 104.97 * 0.08 = 8.40
     expect(screen.getByText(/Tax: \$8\.40/i)).toBeInTheDocument()
@@ -116,27 +125,27 @@ describe('Cart Page', () => {
 
   it('calculates total correctly', () => {
     localStorage.setItem('cart', JSON.stringify(mockCartItems))
-    render(<Cart />)
+    renderWithRouter(<Cart />)
     
     // Total: 104.97 + 5.00 + 8.40 = 118.37
     expect(screen.getByText(/Total: \$118\.37/i)).toBeInTheDocument()
   })
 
   it('shows no shipping when cart is empty', () => {
-    render(<Cart />)
+    renderWithRouter(<Cart />)
     expect(screen.getByText(/Estimated shipping: \$0\.00/i)).toBeInTheDocument()
   })
 
   it('displays product images in cart', () => {
     localStorage.setItem('cart', JSON.stringify(mockCartItems))
-    render(<Cart />)
+    renderWithRouter(<Cart />)
     
     const images = screen.getAllByRole('img')
     expect(images.length).toBeGreaterThan(0)
   })
 
   it('updates when cart-updated event is fired', async () => {
-    render(<Cart />)
+    renderWithRouter(<Cart />)
     expect(screen.getByText(/Your cart is empty/i)).toBeInTheDocument()
     
     localStorage.setItem('cart', JSON.stringify([mockCartItems[0]]))
@@ -153,7 +162,7 @@ describe('Cart Page', () => {
     // Mock window.confirm
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
     
-    render(<Cart />)
+    renderWithRouter(<Cart />)
     const clearButton = screen.getByText('Clear Cart')
     fireEvent.click(clearButton)
     

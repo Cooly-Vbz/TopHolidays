@@ -1,6 +1,15 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from './test-utils'
+import { MemoryRouter } from 'react-router-dom'
 import Checkout from '../pages/Checkout'
+
+function renderWithRouter(ui: React.ReactElement) {
+  return render(
+    <MemoryRouter>
+      {ui}
+    </MemoryRouter>
+  )
+}
 
 describe('Checkout Page', () => {
   beforeEach(() => {
@@ -18,13 +27,13 @@ describe('Checkout Page', () => {
   }
 
   it('shows empty cart message when no items', () => {
-    render(<Checkout />)
+    renderWithRouter(<Checkout />)
     expect(screen.getByText(/Your cart is empty/i)).toBeInTheDocument()
   })
 
   it('validates required fields on submit', async () => {
     seedCart()
-    render(<Checkout />)
+    renderWithRouter(<Checkout />)
 
     const button = screen.getByText(/Place order/i)
     fireEvent.click(button)
@@ -42,7 +51,7 @@ describe('Checkout Page', () => {
 
   it('creates an order when form is valid', async () => {
     seedCart()
-    render(<Checkout />)
+    renderWithRouter(<Checkout />)
 
     fireEvent.change(screen.getByLabelText(/Full name/i), { target: { value: 'Test User' } })
     fireEvent.change(screen.getByLabelText(/^Email$/i), { target: { value: 'test@example.com' } })
@@ -52,7 +61,9 @@ describe('Checkout Page', () => {
     fireEvent.change(screen.getByLabelText(/^Country$/i), { target: { value: 'Country' } })
     fireEvent.change(screen.getByPlaceholderText(/1234 5678/i), { target: { value: '4242 4242 4242 4242' } })
     fireEvent.change(screen.getByPlaceholderText(/08\/28/i), { target: { value: '12/99' } })
-    fireEvent.change(screen.getByPlaceholderText(/123/i), { target: { value: '123' } })
+    // Find CVC field - use more specific selector
+    const cvcField = screen.getByPlaceholderText('123')
+    fireEvent.change(cvcField, { target: { value: '123' } })
 
     const button = screen.getByText(/Place order/i)
     fireEvent.click(button)

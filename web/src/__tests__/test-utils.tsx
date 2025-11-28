@@ -1,7 +1,7 @@
 import type { ReactElement, ReactNode } from 'react'
 import { render as rtlRender, type RenderOptions } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { BrowserRouter } from 'react-router-dom'
+import { MemoryRouter } from 'react-router-dom'
 import { AuthProvider } from '../components/AuthProvider'
 import { ThemeProvider } from '../components/ThemeProvider'
 
@@ -19,13 +19,13 @@ const AllTheProviders = ({ children }: { children: ReactNode }) => {
   const queryClient = createTestQueryClient()
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <MemoryRouter>
         <AuthProvider>
           <ThemeProvider>
             {children}
           </ThemeProvider>
         </AuthProvider>
-      </BrowserRouter>
+      </MemoryRouter>
     </QueryClientProvider>
   )
 }

@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor, fireEvent } from './test-utils'
+import { MemoryRouter } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import Products from '../pages/Products'
 
 // Mock fetch for products
@@ -10,6 +12,15 @@ const mockProducts = [
 ]
 
 describe('Products Page', () => {
+  const renderWithProviders = (ui: React.ReactElement) => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>{ui}</MemoryRouter>
+      </QueryClientProvider>
+    )
+  }
+
   beforeEach(() => {
     localStorage.clear()
     vi.clearAllMocks()
@@ -26,12 +37,12 @@ describe('Products Page', () => {
   })
 
   it('shows loading state initially', () => {
-    render(<Products />)
+    renderWithProviders(<Products />)
     expect(screen.getByText(/Loading products/i)).toBeInTheDocument()
   })
 
   it('displays products after loading', async () => {
-    render(<Products />)
+    renderWithProviders(<Products />)
     await waitFor(() => {
       expect(screen.getByText('Festive Christmas Sweater')).toBeInTheDocument()
     })
@@ -40,7 +51,7 @@ describe('Products Page', () => {
   })
 
   it('displays product prices', async () => {
-    render(<Products />)
+    renderWithProviders(<Products />)
     await waitFor(() => {
       expect(screen.getByText('$39.99')).toBeInTheDocument()
     })
@@ -49,7 +60,7 @@ describe('Products Page', () => {
   })
 
   it('shows promoted badge for promoted products', async () => {
-    render(<Products />)
+    renderWithProviders(<Products />)
     await waitFor(() => {
       const promotedProducts = screen.getAllByText('⭐')
       expect(promotedProducts.length).toBeGreaterThan(0)
@@ -57,7 +68,7 @@ describe('Products Page', () => {
   })
 
   it('allows adding product to cart', async () => {
-    render(<Products />)
+    renderWithProviders(<Products />)
     await waitFor(() => {
       expect(screen.getByText('Festive Christmas Sweater')).toBeInTheDocument()
     })
@@ -73,7 +84,7 @@ describe('Products Page', () => {
   })
 
   it('allows toggling favorites', async () => {
-    render(<Products />)
+    renderWithProviders(<Products />)
     await waitFor(() => {
       expect(screen.getByText('Festive Christmas Sweater')).toBeInTheDocument()
     })
@@ -89,7 +100,7 @@ describe('Products Page', () => {
 
   it('shows visual feedback when product is favorited', async () => {
     localStorage.setItem('favorites', JSON.stringify(['p1']))
-    render(<Products />)
+    renderWithProviders(<Products />)
     
     await waitFor(() => {
       const favoriteButtons = screen.getAllByLabelText('Toggle Favorite')
@@ -100,7 +111,7 @@ describe('Products Page', () => {
   })
 
   it('navigates to product details on click', async () => {
-    const { container } = render(<Products />)
+    const { container } = renderWithProviders(<Products />)
     await waitFor(() => {
       expect(screen.getByText('Festive Christmas Sweater')).toBeInTheDocument()
     })
@@ -115,7 +126,7 @@ describe('Products Page', () => {
 
   it('shows error message when fetch fails', async () => {
     global.fetch = vi.fn(() => Promise.reject(new Error('Network error')))
-    render(<Products />)
+    renderWithProviders(<Products />)
     
     await waitFor(() => {
       expect(screen.getByText(/Failed to load products/i)).toBeInTheDocument()
